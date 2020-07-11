@@ -255,7 +255,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       ..addListener(handleScaleAnimation);
     _scaleAnimationController.addStatusListener(onAnimationStatus);
 
-    _positionAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 600))
+    _positionAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000))
       ..addListener(handlePositionAnimate);
 
     _rotationAnimationController = AnimationController(vsync: this)
