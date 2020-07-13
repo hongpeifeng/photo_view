@@ -198,7 +198,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       final Offset direction = details.velocity.pixelsPerSecond / magnitude;
       animatePosition(
         _position,
-        clampPosition(position: _position + direction * magnitude / 8 ),
+        clampPosition(position: _position + direction * magnitude  ),
       );
     }
   }
@@ -219,10 +219,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   void animatePosition(Offset from, Offset to) {
     _positionAnimation = Tween<Offset>(begin: from, end: to)
-        .animate(_positionAnimationController);
+        .animate(CurvedAnimation(parent: _positionAnimationController, curve: Curves.easeOutCirc));
     _positionAnimationController
       ..value = 0.0
-      ..fling(velocity: 0.4)
+      ..forward()
     ;
   }
 
