@@ -36,6 +36,7 @@ class PhotoViewCore extends StatefulWidget {
     @required this.basePosition,
     @required this.tightMode,
     @required this.filterQuality,
+    this.canScale = true,
   })  : customChild = null,
         super(key: key);
 
@@ -58,6 +59,7 @@ class PhotoViewCore extends StatefulWidget {
     @required this.basePosition,
     @required this.tightMode,
     @required this.filterQuality,
+    this.canScale = true,
   })  : imageProvider = null,
         gaplessPlayback = false,
         super(key: key);
@@ -85,6 +87,7 @@ class PhotoViewCore extends StatefulWidget {
   final bool tightMode;
 
   final FilterQuality filterQuality;
+  final bool canScale;
 
   @override
   State<StatefulWidget> createState() {
@@ -345,9 +348,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
                 decoration: widget.backgroundDecoration ?? _defaultDecoration,
               ),
               onDoubleTap: nextScaleState,
-              onScaleStart: onScaleStart,
-              onScaleUpdate: onScaleUpdate,
-              onScaleEnd: onScaleEnd,
+              onScaleStart: widget.canScale ? onScaleStart : null,
+              onScaleUpdate: widget.canScale ? onScaleUpdate : null,
+              onScaleEnd: widget.canScale ? onScaleEnd : null,
               hitDetector: this,
               onTapUp: widget.onTapUp == null ? null : onTapUp,
               onTapDown: widget.onTapDown == null ? null : onTapDown,

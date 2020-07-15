@@ -593,6 +593,7 @@ class _PhotoViewState extends State<PhotoView> {
       gestureDetectorBehavior: widget.gestureDetectorBehavior,
       tightMode: widget.tightMode ?? false,
       filterQuality: widget.filterQuality ?? FilterQuality.none,
+      canScale: false,
     );
   }
 
@@ -633,7 +634,7 @@ class _PhotoViewState extends State<PhotoView> {
     final isVerticalLongPhoto = _childSize.height/_childSize.width > 2.5;
     if (isVerticalLongPhoto) {
       initialScale = PhotoViewComputedScale.covered;
-      maxScale = PhotoViewComputedScale.covered;
+      maxScale = widget.maxScale ?? PhotoViewComputedScale.covered;
       minScale = PhotoViewComputedScale.covered;
     }
 
