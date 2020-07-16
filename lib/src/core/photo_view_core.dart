@@ -150,13 +150,13 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
 
 //    print('position:${clampPosition(position: delta * details.scale)} cornersY:${cornersY(scale: details.scale).max}');
-
-    updateMultiple(
-      scale: newScale,
-      position: clampPosition(position: delta * details.scale),
-      rotation: _rotationBefore + details.rotation,
-      rotationFocusPoint: details.focalPoint,
-    );
+    if (widget.canScale)
+      updateMultiple(
+        scale: newScale,
+        position: clampPosition(position: delta * details.scale),
+        rotation: _rotationBefore + details.rotation,
+        rotationFocusPoint: details.focalPoint,
+      );
     widget.onScaleUpdate?.call(context, details, delta, controller.value);
   }
 
@@ -167,7 +167,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     final double minScale = scaleBoundaries.minScale;
 
     widget.onScaleEnd?.call(context, details, _position, controller.value);
-    //animate back to maxScale if gesture exceeded the maxScale specified
+
+    if (!widget.canScale) return;
+      //animate back to maxScale if gesture exceeded the maxScale specified
     if (_scale > maxScale) {
       final double scaleComebackRatio = maxScale / _scale;
       animateScale(_scale, maxScale);
@@ -348,9 +350,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
                 decoration: widget.backgroundDecoration ?? _defaultDecoration,
               ),
               onDoubleTap: nextScaleState,
-              onScaleStart: widget.canScale ? onScaleStart : null,
-              onScaleUpdate: widget.canScale ? onScaleUpdate : null,
-              onScaleEnd: widget.canScale ? onScaleEnd : null,
+              onScaleStart: onScaleStart,
+              onScaleUpdate: onScaleUpdate,
+              onScaleEnd: onScaleEnd,
               hitDetector: this,
               onTapUp: widget.onTapUp == null ? null : onTapUp,
               onTapDown: widget.onTapDown == null ? null : onTapDown,
