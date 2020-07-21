@@ -679,6 +679,15 @@ class _PhotoViewState extends State<PhotoView> {
 
     return GestureDetector(
       onTapUp: (details) => widget.onTapUp(context,details,null),
+      onScaleUpdate: (details) {
+        widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleStart: (details) {
+        widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleEnd: (details) {
+        widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
       child: PhotoViewDefaultLoading(
         event: _imageChunkEvent,
         holderWiget: widget.holderWiget,
@@ -690,6 +699,15 @@ class _PhotoViewState extends State<PhotoView> {
   Widget _buildLoadFailed() {
     return GestureDetector(
       onTapUp: (details) => widget.onTapUp(context,details,null),
+      onScaleUpdate: (details) {
+        widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleStart: (details) {
+        widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleEnd: (details) {
+        widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
       child: widget.loadFailedChild ?? PhotoViewDefaultError(holderWiget: widget.holderWiget,),
     );
   }

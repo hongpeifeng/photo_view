@@ -10,16 +10,27 @@ class PhotoViewDefaultError extends StatelessWidget {
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height,
-      color: Color(0x00000000),
-      child: Center(
-        child:
-        holderWiget == null ?
-        Icon(
-          Icons.broken_image,
-          color: Colors.grey[400],
-          size: 40.0,
-        ) : holderWiget,
+      color: Colors.transparent,
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          holderWiget == null ? Container() : holderWiget,
+          Icon(
+              Icons.broken_image,
+              color: Colors.white,
+              size: 60.0,
+            )
+        ],
       ),
+//      child: Center(
+//        child:
+//        holderWiget == null ?
+//        Icon(
+//          Icons.broken_image,
+//          color: Colors.grey[400],
+//          size: 40.0,
+//        ) : holderWiget,
+//      ),
     );
   }
 }
@@ -38,7 +49,7 @@ class PhotoViewDefaultLoading extends StatelessWidget {
     return Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
-        color: Color(0x00000000),
+        color: Colors.transparent,
         child: Stack(children: <Widget>[
           holderWiget == null ? Container() : Center(
             child: holderWiget,
@@ -47,7 +58,7 @@ class PhotoViewDefaultLoading extends StatelessWidget {
             child: Container(
               width: 20.0,
               height: 20.0,
-              child: CircularProgressIndicator(value: value),
+              child: const CircularProgressIndicator(),
             ),
           ),
         ])
