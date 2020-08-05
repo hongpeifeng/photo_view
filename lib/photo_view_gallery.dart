@@ -108,6 +108,9 @@ class PhotoViewGallery extends StatefulWidget {
     this.scaleStateChangedCallback,
     this.enableRotation = false,
     this.scrollPhysics,
+    this.onScaleUpdate,
+    this.onScaleStart,
+    this.onScaleEnd,
     this.scrollDirection = Axis.horizontal,
     this.customSize,
   })  : _isBuilder = false,
@@ -131,6 +134,9 @@ class PhotoViewGallery extends StatefulWidget {
     this.reverse = false,
     this.pageController,
     this.onPageChanged,
+    this.onScaleUpdate,
+    this.onScaleStart,
+    this.onScaleEnd,
     this.scaleStateChangedCallback,
     this.enableRotation = false,
     this.scrollPhysics,
@@ -192,6 +198,12 @@ class PhotoViewGallery extends StatefulWidget {
 
   final bool _isBuilder;
 
+  final PhotoViewImageScaleStartCallback onScaleStart;
+
+  final PhotoViewImageScaleUpdateCallback onScaleUpdate;
+
+  final PhotoViewImageScaleEndCallback onScaleEnd;
+
   @override
   State<StatefulWidget> createState() {
     return _PhotoViewGalleryState();
@@ -227,16 +239,28 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
   @override
   Widget build(BuildContext context) {
     // Enable corner hit test
-    return PhotoViewGestureDetectorScope(
-      axis: widget.scrollDirection,
-      child: PageView.builder(
-        reverse: widget.reverse,
-        controller: _controller,
-        onPageChanged: widget.onPageChanged,
-        itemCount: itemCount,
-        itemBuilder: _buildItem,
-        scrollDirection: widget.scrollDirection,
-        physics: widget.scrollPhysics,
+    return GestureDetector(
+      onScaleUpdate: (details) {
+        widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleStart: (details) {
+        widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleEnd: (details) {
+        widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      child: PhotoViewGestureDetectorScope(
+        axis: widget.scrollDirection,
+        child: PageView.builder(
+          reverse: widget.reverse,
+          controller: _controller,
+          onPageChanged: widget.onPageChanged,
+          itemCount: itemCount,
+          itemBuilder: _buildItem,
+          scrollDirection: widget.scrollDirection,
+          physics: widget.scrollPhysics,
+          pageSnapping:false,
+        ),
       ),
     );
   }
