@@ -145,10 +145,12 @@ class PhotoViewGestureRecognizer extends ScaleGestureRecognizer {
   }
 
   void _decideIfWeAcceptEvent(PointerEvent event) {
+    print(event);
     if (!(event is PointerMoveEvent)) {
       return;
     }
     final move = _initialFocalPoint - _currentFocalPoint;
+    if (move == Offset.zero) return;
     final bool shouldMove = validateAxis == Axis.vertical
         ? hitDetector.shouldMoveY(move)
         : hitDetector.shouldMoveX(move);
