@@ -145,7 +145,6 @@ class PhotoViewGestureRecognizer extends ScaleGestureRecognizer {
   }
 
   void _decideIfWeAcceptEvent(PointerEvent event) {
-    print(event);
     if (!(event is PointerMoveEvent)) {
       return;
     }
