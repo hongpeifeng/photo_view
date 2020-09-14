@@ -203,7 +203,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       final Offset direction = details.velocity.pixelsPerSecond / magnitude;
       animatePosition(
         _position,
-        clampPosition(position: _position + direction * magnitude  ),
+        clampPosition(position: _position + direction * magnitude * 0.5  ),
       );
     }
   }
@@ -295,7 +295,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void onTapDown(TapDownDetails details) {
-    widget.onTapDown?.call(context, details, controller.value);
+//    widget.onTapDown?.call(context, details, controller.value);
+    _positionAnimationController.stop();
   }
 
   @override
@@ -355,7 +356,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
               onScaleEnd: onScaleEnd,
               hitDetector: this,
               onTapUp: widget.onTapUp == null ? null : onTapUp,
-              onTapDown: widget.onTapDown == null ? null : onTapDown,
+              onTapDown: onTapDown,
             );
           } else {
             return Container();
