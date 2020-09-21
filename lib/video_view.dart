@@ -139,7 +139,7 @@ class _VideoViewState extends State<VideoView> {
                 },
               ),
             ]),
-            _chewieController == null ? Center(child: CircularProgressIndicator(),) : Container(),
+            _chewieController == null ? const Center(child: CircularProgressIndicator(),) : Container(),
           ],
         ),
       ),
