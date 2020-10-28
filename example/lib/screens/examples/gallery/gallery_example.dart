@@ -447,7 +447,7 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> with 
     final GalleryItem item = items[index];
     return PhotoViewGalleryPageOptions
         .customChild(
-      child: VideoView(id: item.id, thumbUrl: item.holderUrl, videoUrl: item.url,thumbHeight: item.thumbHeight, thumbWidth: item.thumbWidth,),
+      child: Container(),
       onScaleStart: _onScaleStart,
       onScaleUpdate: _onScaleUpdate,
       onScaleEnd: _onScaleEnd,
