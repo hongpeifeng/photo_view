@@ -707,9 +707,17 @@ class _PhotoViewState extends State<PhotoView> {
       onScaleEnd: (details) {
         widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
       },
-      child: widget.loadFailedChild ?? PhotoViewDefaultError(holderWiget: widget.holderWiget,),
+      child: widget.loadFailedChild ?? PhotoViewDefaultError(holderWiget: widget.holderWiget, onFailReload: resetLoadFailed),
     );
   }
+
+  ///加载失败后，重置状态，重新加载图片
+  void resetLoadFailed(){
+    setState(() {
+      _loadFailed = false;
+    });
+  }
+
 }
 
 /// The default [ScaleStateCycle]
