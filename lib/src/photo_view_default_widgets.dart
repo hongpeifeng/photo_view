@@ -1,39 +1,38 @@
 import 'package:flutter/material.dart';
 
+//加载图片失败后显示的Widget
 class PhotoViewDefaultError extends StatelessWidget {
 
-  PhotoViewDefaultError({Key key, this.holderWiget, this.onFailRelaod}) : super(key: key);
-  final Widget holderWiget;
-  final Function onFailRelaod;
+  PhotoViewDefaultError({Key key, this.holderWiget, this.onFailReload}) : super(key: key);
+  final Widget holderWiget;     //占位背景暂时不用
+  final Function onFailReload;  //重新加载方法
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onFailRelaod,
+      onTap: onFailReload,
       child: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         color: Colors.transparent,
-        child: Stack(
-          fit: StackFit.expand,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            holderWiget == null ? Container() : holderWiget,
-            Icon(
-              Icons.broken_image,
-              color: Colors.blue,
-              size: 60.0,
+            const Icon(
+                Icons.broken_image,
+                color: Colors.white30,
+                size: 60
+            ),
+            const SizedBox(height: 80),
+            Container(
+              constraints: const BoxConstraints.tightFor(width: 128, height: 36),
+              decoration: BoxDecoration(border: Border.all(color: Colors.white30, width: 0.5), borderRadius: BorderRadius.circular(5)),
+              alignment: Alignment.center,
+              child: const Text("重新加载", style: TextStyle(fontSize: 14, color: Colors.white)),
             )
           ],
         ),
-//      child: Center(
-//        child:
-//        holderWiget == null ?
-//        Icon(
-//          Icons.broken_image,
-//          color: Colors.grey[400],
-//          size: 40.0,
-//        ) : holderWiget,
-//      ),
       ),
     );
   }
