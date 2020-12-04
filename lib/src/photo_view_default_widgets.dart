@@ -9,13 +9,13 @@ class PhotoViewDefaultError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onFailReload,
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        color: Colors.transparent,
-        alignment: Alignment.center,
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      color: Colors.black,
+      alignment: Alignment.center,
+      child: GestureDetector(
+        onTap: onFailReload,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
