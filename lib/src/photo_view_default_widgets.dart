@@ -59,9 +59,9 @@ class PhotoViewDefaultLoading extends StatelessWidget {
           ),
           Center(
             child: Container(
-              width: 20.0,
-              height: 20.0,
-              child: const CircularProgressIndicator(),
+              width: 16,
+              height: 16,
+              child: const CircularProgressIndicator(strokeWidth: 2),
             ),
           ),
         ])
