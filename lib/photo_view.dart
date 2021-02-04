@@ -456,9 +456,12 @@ class _PhotoViewState extends State<PhotoView> {
       if (!mounted) {
         return;
       }
-      setState(() {
-        widget.loadResultCallback?.call(false);
-        _loadFailed = true;
+      //延迟调用setState：图片地址格式问题导致加载失败，会导致同时调用
+      Future.delayed(const Duration(milliseconds: 200)).then((value) {
+        setState(() {
+          widget.loadResultCallback?.call(false);
+          _loadFailed = true;
+        });
       });
       FlutterError.reportError(
         FlutterErrorDetails(exception: exception, stack: stackTrace),
