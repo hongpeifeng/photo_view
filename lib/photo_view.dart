@@ -453,6 +453,7 @@ class _PhotoViewState extends State<PhotoView> {
         setState(() => _imageChunkEvent = event);
       }
     }, onError: (exception, stackTrace) {
+      widget.imageProvider.evict();
       if (!mounted) {
         return;
       }
