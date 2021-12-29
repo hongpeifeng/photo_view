@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 //加载图片失败后显示的Widget
 class PhotoViewDefaultError extends StatelessWidget {
 
-  PhotoViewDefaultError({Key key, this.holderWiget, this.onFailReload}) : super(key: key);
-  final Widget holderWiget;     //占位背景暂时不用
-  final Function onFailReload;  //重新加载方法
+  PhotoViewDefaultError({Key? key, this.holderWiget, this.onFailReload}) : super(key: key);
+  final Widget? holderWiget;     //占位背景暂时不用
+  final Function? onFailReload;  //重新加载方法
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class PhotoViewDefaultError extends StatelessWidget {
       color: Colors.black,
       alignment: Alignment.center,
       child: GestureDetector(
-        onTap: onFailReload,
+        onTap: onFailReload as void Function()?,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -39,16 +39,13 @@ class PhotoViewDefaultError extends StatelessWidget {
 }
 
 class PhotoViewDefaultLoading extends StatelessWidget {
-  const PhotoViewDefaultLoading({Key key, this.event, this.holderWiget}) : super(key: key);
+  const PhotoViewDefaultLoading({Key? key, this.event, this.holderWiget}) : super(key: key);
 
-  final ImageChunkEvent event;
-  final Widget holderWiget;
+  final ImageChunkEvent? event;
+  final Widget? holderWiget;
 
   @override
   Widget build(BuildContext context) {
-    final value = event == null
-        ? 0.0
-        : event.cumulativeBytesLoaded / event.expectedTotalBytes;
     return Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,

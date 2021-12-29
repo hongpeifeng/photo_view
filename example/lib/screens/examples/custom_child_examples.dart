@@ -37,10 +37,10 @@ class CustomChildExample extends StatelessWidget {
                         padding: const EdgeInsets.all(10.0),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            const Text(
+                          children: const <Widget>[
+                            Text(
                               "Hello there, this is a text, that is a svg:",
-                              style: const TextStyle(fontSize: 12.0),
+                              style: TextStyle(fontSize: 12.0),
                               textAlign: TextAlign.center,
                             ),
 //                            SvgPicture.asset(

@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'photo_view_hit_corners.dart';
 class PhotoViewGestureDetector extends StatelessWidget {
   const PhotoViewGestureDetector({
-    Key key,
+    Key? key,
     this.hitDetector,
     this.onScaleStart,
     this.onScaleUpdate,
@@ -16,25 +16,25 @@ class PhotoViewGestureDetector extends StatelessWidget {
     this.behavior,
   }) : super(key: key);
 
-  final GestureDoubleTapCallback onDoubleTap;
-  final HitCornersDetector hitDetector;
+  final GestureDoubleTapCallback? onDoubleTap;
+  final HitCornersDetector? hitDetector;
 
-  final GestureScaleStartCallback onScaleStart;
-  final GestureScaleUpdateCallback onScaleUpdate;
-  final GestureScaleEndCallback onScaleEnd;
+  final GestureScaleStartCallback? onScaleStart;
+  final GestureScaleUpdateCallback? onScaleUpdate;
+  final GestureScaleEndCallback? onScaleEnd;
 
-  final GestureTapUpCallback onTapUp;
-  final GestureTapDownCallback onTapDown;
+  final GestureTapUpCallback? onTapUp;
+  final GestureTapDownCallback? onTapDown;
 
-  final Widget child;
+  final Widget? child;
 
-  final HitTestBehavior behavior;
+  final HitTestBehavior? behavior;
 
   @override
   Widget build(BuildContext context) {
     final scope = PhotoViewGestureDetectorScope.of(context);
 
-    final Axis axis = scope?.axis;
+    final Axis? axis = scope?.axis;
 
     final Map<Type, GestureRecognizerFactory> gestures =
     <Type, GestureRecognizerFactory>{};
@@ -82,17 +82,17 @@ class PhotoViewGestureDetector extends StatelessWidget {
 class PhotoViewGestureRecognizer extends ScaleGestureRecognizer {
   PhotoViewGestureRecognizer({
     this.hitDetector,
-    Object debugOwner,
+    Object? debugOwner,
     this.validateAxis,
-    PointerDeviceKind kind,
+    PointerDeviceKind? kind,
   }) : super(debugOwner: debugOwner, kind: kind);
-  final HitCornersDetector hitDetector;
-  final Axis validateAxis;
+  final HitCornersDetector? hitDetector;
+  final Axis? validateAxis;
 
   Map<int, Offset> _pointerLocations = <int, Offset>{};
 
-  Offset _initialFocalPoint;
-  Offset _currentFocalPoint;
+  Offset? _initialFocalPoint;
+  Offset? _currentFocalPoint;
 
   bool ready = true;
 
@@ -102,7 +102,7 @@ class PhotoViewGestureRecognizer extends ScaleGestureRecognizer {
       ready = false;
       _pointerLocations = <int, Offset>{};
     }
-    super.addAllowedPointer(event);
+    super.addAllowedPointer(event as PointerDownEvent);
   }
 
   @override
@@ -139,7 +139,7 @@ class PhotoViewGestureRecognizer extends ScaleGestureRecognizer {
     final int count = _pointerLocations.keys.length;
     Offset focalPoint = Offset.zero;
     for (int pointer in _pointerLocations.keys)
-      focalPoint += _pointerLocations[pointer];
+      focalPoint += _pointerLocations[pointer]!;
     _currentFocalPoint =
     count > 0 ? focalPoint / count.toDouble() : Offset.zero;
   }
@@ -148,11 +148,11 @@ class PhotoViewGestureRecognizer extends ScaleGestureRecognizer {
     if (!(event is PointerMoveEvent)) {
       return;
     }
-    final move = _initialFocalPoint - _currentFocalPoint;
+    final move = _initialFocalPoint! - _currentFocalPoint!;
     if (move == Offset.zero) return;
     final bool shouldMove = validateAxis == Axis.vertical
-        ? hitDetector.shouldMoveY(move)
-        : hitDetector.shouldMoveX(move);
+        ? hitDetector!.shouldMoveY(move)
+        : hitDetector!.shouldMoveX(move);
     if (shouldMove || _pointerLocations.keys.length > 1) {
       acceptGesture(event.pointer);
     }
@@ -179,16 +179,16 @@ class PhotoViewGestureRecognizer extends ScaleGestureRecognizer {
 class PhotoViewGestureDetectorScope extends InheritedWidget {
   PhotoViewGestureDetectorScope({
     this.axis,
-    @required Widget child,
+    required Widget child,
   }) : super(child: child);
 
-  static PhotoViewGestureDetectorScope of(BuildContext context) {
-    final PhotoViewGestureDetectorScope scope = context
+  static PhotoViewGestureDetectorScope? of(BuildContext context) {
+    final PhotoViewGestureDetectorScope? scope = context
         .dependOnInheritedWidgetOfExactType<PhotoViewGestureDetectorScope>();
     return scope;
   }
 
-  final Axis axis;
+  final Axis? axis;
 
   @override
   bool updateShouldNotify(PhotoViewGestureDetectorScope oldWidget) {
