@@ -102,8 +102,8 @@ typedef PhotoViewGalleryBuilder = PhotoViewGalleryPageOptions Function(
 class PhotoViewGallery extends StatefulWidget {
   /// Construct a gallery with static items through a list of [PhotoViewGalleryPageOptions].
   const PhotoViewGallery({
-    Key key,
-    @required this.pageOptions,
+    Key? key,
+    required List<PhotoViewGalleryPageOptions> this.pageOptions,
     @Deprecated("Use loadingBuilder instead") this.loadingChild,
     this.loadingBuilder,
     this.loadFailedChild,
@@ -124,16 +124,15 @@ class PhotoViewGallery extends StatefulWidget {
   })  : _isBuilder = false,
         itemCount = null,
         builder = null,
-        assert(pageOptions != null),
         super(key: key);
 
   /// Construct a gallery with dynamic items.
   ///
   /// The builder must return a [PhotoViewGalleryPageOptions].
   const PhotoViewGallery.builder({
-    Key key,
-    @required this.itemCount,
-    @required this.builder,
+    Key? key,
+    required int this.itemCount,
+    required this.builder,
     @Deprecated("Use loadingBuilder instead") this.loadingChild,
     this.loadingBuilder,
     this.loadFailedChild,
@@ -153,33 +152,32 @@ class PhotoViewGallery extends StatefulWidget {
     this.customSize,
   })  : _isBuilder = true,
         pageOptions = null,
-        assert(itemCount != null),
         assert(builder != null),
         super(key: key);
 
   /// A list of options to describe the items in the gallery
-  final List<PhotoViewGalleryPageOptions> pageOptions;
+  final List<PhotoViewGalleryPageOptions>? pageOptions;
 
   /// The count of items in the gallery, only used when constructed via [PhotoViewGallery.builder]
-  final int itemCount;
+  final int? itemCount;
 
   /// Called to build items for the gallery when using [PhotoViewGallery.builder]
-  final PhotoViewGalleryBuilder builder;
+  final PhotoViewGalleryBuilder? builder;
 
   /// [ScrollPhysics] for the internal [PageView]
-  final ScrollPhysics scrollPhysics;
+  final ScrollPhysics? scrollPhysics;
 
   /// Mirror to [PhotoView.loadingBuilder]
-  final LoadingBuilder loadingBuilder;
+  final LoadingBuilder? loadingBuilder;
 
   /// Mirror to [PhotoView.loadingchild]
-  final Widget loadingChild;
+  final Widget? loadingChild;
 
   /// Mirror to [PhotoView.loadFailedChild]
-  final Widget loadFailedChild;
+  final Widget? loadFailedChild;
 
   /// Mirror to [PhotoView.backgroundDecoration]
-  final Decoration backgroundDecoration;
+  final Decoration? backgroundDecoration;
 
   /// Mirror to [PhotoView.gaplessPlayback]
   final bool gaplessPlayback;
@@ -188,30 +186,30 @@ class PhotoViewGallery extends StatefulWidget {
   final bool reverse;
 
   /// An object that controls the [PageView] inside [PhotoViewGallery]
-  final PageController pageController;
+  final PageController? pageController;
 
   /// An callback to be called on a page change
-  final PhotoViewGalleryPageChangedCallback onPageChanged;
+  final PhotoViewGalleryPageChangedCallback? onPageChanged;
 
   /// Mirror to [PhotoView.scaleStateChangedCallback]
-  final ValueChanged<PhotoViewScaleState> scaleStateChangedCallback;
+  final ValueChanged<PhotoViewScaleState>? scaleStateChangedCallback;
 
   /// Mirror to [PhotoView.enableRotation]
   final bool enableRotation;
 
   /// Mirror to [PhotoView.customSize]
-  final Size customSize;
+  final Size? customSize;
 
   /// The axis along which the [PageView] scrolls. Mirror to [PageView.scrollDirection]
   final Axis scrollDirection;
 
   final bool _isBuilder;
 
-  final PhotoViewImageScaleStartCallback onScaleStart;
+  final PhotoViewImageScaleStartCallback? onScaleStart;
 
-  final PhotoViewImageScaleUpdateCallback onScaleUpdate;
+  final PhotoViewImageScaleUpdateCallback? onScaleUpdate;
 
-  final PhotoViewImageScaleEndCallback onScaleEnd;
+  final PhotoViewImageScaleEndCallback? onScaleEnd;
 
   /// With this flag set to true, when accessibility focus reaches the end of
   /// the current page and user attempts to move it to the next element, focus
@@ -225,7 +223,7 @@ class PhotoViewGallery extends StatefulWidget {
 }
 
 class _PhotoViewGalleryState extends State<PhotoViewGallery> {
-  PageController _controller;
+  PageController? _controller;
 
   @override
   void initState() {
@@ -235,19 +233,19 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
 
   void scaleStateChangedCallback(PhotoViewScaleState scaleState) {
     if (widget.scaleStateChangedCallback != null) {
-      widget.scaleStateChangedCallback(scaleState);
+      widget.scaleStateChangedCallback!(scaleState);
     }
   }
 
   int get actualPage {
-    return _controller.hasClients ? _controller.page.floor() : 0;
+    return _controller!.hasClients ? _controller!.page!.floor() : 0;
   }
 
-  int get itemCount {
+  int? get itemCount {
     if (widget._isBuilder) {
       return widget.itemCount;
     }
-    return widget.pageOptions.length;
+    return widget.pageOptions!.length;
   }
 
   @override
@@ -255,16 +253,16 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
     // Enable corner hit test
     return GestureDetector(
       onScaleUpdate: (details) {
-        widget.onScaleUpdate(context, details, null,
-            PhotoViewControllerValue(position: Offset.zero));
+        widget.onScaleUpdate!(context, details, null,
+            const PhotoViewControllerValue(position: Offset.zero, rotationFocusPoint: null, scale: null, rotation: null));
       },
       onScaleStart: (details) {
-        widget.onScaleStart(context, details, null,
-            PhotoViewControllerValue(position: Offset.zero));
+        widget.onScaleStart!(context, details, null,
+            const PhotoViewControllerValue(position: Offset.zero, scale: null, rotation: null, rotationFocusPoint: null));
       },
       onScaleEnd: (details) {
-        widget.onScaleEnd(context, details, null,
-            PhotoViewControllerValue(position: Offset.zero));
+        widget.onScaleEnd!(context, details, null,
+            const PhotoViewControllerValue(position: Offset.zero, rotationFocusPoint: null, scale: null, rotation: null));
       },
       child: PhotoViewGestureDetectorScope(
         axis: widget.scrollDirection,
@@ -356,9 +354,9 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
   PhotoViewGalleryPageOptions _buildPageOption(
       BuildContext context, int index) {
     if (widget._isBuilder) {
-      return widget.builder(context, index);
+      return widget.builder!(context, index);
     }
-    return widget.pageOptions[index];
+    return widget.pageOptions![index];
   }
 }
 
@@ -368,8 +366,8 @@ class _PhotoViewGalleryState extends State<PhotoViewGallery> {
 ///
 class PhotoViewGalleryPageOptions {
   PhotoViewGalleryPageOptions(
-      {Key key,
-      @required this.imageProvider,
+      {Key? key,
+      required ImageProvider<Object> this.imageProvider,
       this.backgroundDecoration,
       this.heroAttributes,
       this.minScale,
@@ -390,11 +388,10 @@ class PhotoViewGalleryPageOptions {
       this.filterQuality,
       this.loadResultCallback})
       : child = null,
-        childSize = null,
-        assert(imageProvider != null);
+        childSize = null;
 
   PhotoViewGalleryPageOptions.customChild(
-      {@required this.child,
+      {required Widget this.child,
       this.backgroundDecoration,
       this.childSize,
       this.heroAttributes,
@@ -419,12 +416,12 @@ class PhotoViewGalleryPageOptions {
         assert(child != null);
 
   /// Mirror to [PhotoView.imageProvider]
-  final ImageProvider imageProvider;
+  final ImageProvider? imageProvider;
 
-  final BoxDecoration backgroundDecoration;
+  final BoxDecoration? backgroundDecoration;
 
   /// Mirror to [PhotoView.heroAttributes]
-  final PhotoViewHeroAttributes heroAttributes;
+  final PhotoViewHeroAttributes? heroAttributes;
 
   /// Mirror to [PhotoView.minScale]
   final dynamic minScale;
@@ -436,45 +433,45 @@ class PhotoViewGalleryPageOptions {
   final dynamic initialScale;
 
   /// Mirror to [PhotoView.controller]
-  final PhotoViewController controller;
+  final PhotoViewController? controller;
 
   /// Mirror to [PhotoView.scaleStateController]
-  final PhotoViewScaleStateController scaleStateController;
+  final PhotoViewScaleStateController? scaleStateController;
 
   /// Mirror to [PhotoView.basePosition]
-  final Alignment basePosition;
+  final Alignment? basePosition;
 
   /// Mirror to [PhotoView.child]
-  final Widget child;
+  final Widget? child;
 
   /// Mirror to [PhotoView.childSize]
-  final Size childSize;
+  final Size? childSize;
 
   /// Mirror to [PhotoView.scaleStateCycle]
-  final ScaleStateCycle scaleStateCycle;
+  final ScaleStateCycle? scaleStateCycle;
 
   /// Mirror to [PhotoView.onTapUp]
-  final PhotoViewImageTapUpCallback onTapUp;
+  final PhotoViewImageTapUpCallback? onTapUp;
 
   /// Mirror to [PhotoView.onTapDown]
-  final PhotoViewImageTapDownCallback onTapDown;
+  final PhotoViewImageTapDownCallback? onTapDown;
 
-  final PhotoViewImageScaleStartCallback onScaleStart;
-  final PhotoViewImageScaleUpdateCallback onScaleUpdate;
-  final PhotoViewImageScaleEndCallback onScaleEnd;
+  final PhotoViewImageScaleStartCallback? onScaleStart;
+  final PhotoViewImageScaleUpdateCallback? onScaleUpdate;
+  final PhotoViewImageScaleEndCallback? onScaleEnd;
 
 //  final String imageHolderUrl;
-  final Widget holderWiget;
+  final Widget? holderWiget;
 
   /// Mirror to [PhotoView.gestureDetectorBehavior]
-  final HitTestBehavior gestureDetectorBehavior;
+  final HitTestBehavior? gestureDetectorBehavior;
 
   /// Mirror to [PhotoView.tightMode]
-  final bool tightMode;
+  final bool? tightMode;
 
   /// Quality levels for image filters.
-  final FilterQuality filterQuality;
+  final FilterQuality? filterQuality;
 
   /// 加载结果
-  final Function(bool) loadResultCallback;
+  final Function(bool)? loadResultCallback;
 }

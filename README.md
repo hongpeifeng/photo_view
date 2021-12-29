@@ -16,7 +16,7 @@ Even though being super simple to use, PhotoView is extremely customizable thoug
 Add `photo_view` as a dependency in your pubspec.yaml file ([what?](https://flutter.io/using-packages/)).
 
 Import Photo View:
-```dart
+```dartfvm dart pub outdated --mode=null-safety
 import 'package:photo_view/photo_view.dart';
 ```
 

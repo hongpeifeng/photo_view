@@ -33,16 +33,16 @@ class CacheNetworkImage extends image_provider.ImageProvider<image_provider.Netw
   final double scale;
 
   @override
-  final Map<String, String> headers;
+  final Map<String, String>? headers;
 
   /// 从缓存取出图片
   /// param url
-  final Future<File> Function(String) getFileFromCache;
+  final Future<File> Function(String)? getFileFromCache;
 
   /// 保存图片到缓存中
   /// param1: url
   /// param2: fileBytes
-  final Future<void> Function(String, Uint8List) saveFileToCache;
+  final Future<void> Function(String, Uint8List)? saveFileToCache;
 
   @override
   Future<CacheNetworkImage> obtainKey(image_provider.ImageConfiguration configuration) {
@@ -79,7 +79,7 @@ class CacheNetworkImage extends image_provider.ImageProvider<image_provider.Netw
     HttpClient client = _sharedHttpClient;
     assert(() {
       if (debugNetworkImageHttpClientProvider != null)
-        client = debugNetworkImageHttpClientProvider();
+        client = debugNetworkImageHttpClientProvider!();
       return true;
     }());
     return client;
@@ -93,7 +93,7 @@ class CacheNetworkImage extends image_provider.ImageProvider<image_provider.Netw
     try {
       assert(key == this);
 
-      File file = await getFileFromCache?.call(key.url);
+      File file = (await getFileFromCache?.call(key.url))!;
       if (file != null && file.existsSync()) {
         var bytes = file.readAsBytesSync();
         return decode(bytes);
@@ -109,13 +109,13 @@ class CacheNetworkImage extends image_provider.ImageProvider<image_provider.Netw
         // The network may be only temporarily unavailable, or the file will be
         // added on the server later. Avoid having future calls to resolve
         // fail to check the network again.
-        PaintingBinding.instance.imageCache.evict(key);
+        PaintingBinding.instance!.imageCache!.evict(key);
         throw image_provider.NetworkImageLoadException(statusCode: response.statusCode, uri: resolved);
       }
 
       final Uint8List bytes = await consolidateHttpClientResponseBytes(
         response,
-        onBytesReceived: (int cumulative, int total) {
+        onBytesReceived: (int cumulative, int? total) {
           chunkEvents.add(ImageChunkEvent(
             cumulativeBytesLoaded: cumulative,
             expectedTotalBytes: total,

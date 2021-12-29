@@ -197,13 +197,13 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> with 
     _tail = widget.initialIndex;
     init();
     // 动画
-    _bakOffsetAnimationController = new AnimationController(
+    _bakOffsetAnimationController = AnimationController(
         duration: const Duration(milliseconds: 200), vsync: this)
       ..addListener(() => setState(() {}));
-    _bakOffsetAnimation = new Tween(begin: Offset.zero, end: Offset.zero).animate(_bakOffsetAnimationController);
-    _bakScaleAnimationController = new AnimationController(
+    _bakOffsetAnimation = Tween(begin: Offset.zero, end: Offset.zero).animate(_bakOffsetAnimationController);
+    _bakScaleAnimationController = AnimationController(
         duration: const Duration(milliseconds: 200), vsync: this);
-    _bakScaleAnimation = new Tween(begin: 1.0, end: 1.0).animate(_bakScaleAnimationController);
+    _bakScaleAnimation = Tween(begin: 1.0, end: 1.0).animate(_bakScaleAnimationController);
 
     // 状态栏隐藏
     SystemChrome.setEnabledSystemUIOverlays([]);
@@ -418,7 +418,7 @@ class _GalleryPhotoViewWrapperState extends State<GalleryPhotoViewWrapper> with 
     else if (item.resource != null)
       provider = AssetImage(item.resource);
     return PhotoViewGalleryPageOptions(
-        backgroundDecoration: BoxDecoration(color: Color(0x00000000)),
+        backgroundDecoration: const BoxDecoration(color: Color(0x00000000)),
         imageProvider: provider,
         onTapUp: (context,_,value) {
           Navigator.of(context).pop();
