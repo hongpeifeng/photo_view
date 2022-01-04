@@ -607,20 +607,49 @@ class _PhotoViewState extends State<PhotoView> {
     return FutureBuilder(
         future: _getImage(),
         builder: (BuildContext context, AsyncSnapshot<ImageInfo> info) {
+          Widget child;
           if (info.hasData) {
-            return _buildWrapperImage(context, constraints);
+            child = _buildWrapperImage(context, constraints);
           } else {
-            return _buildLoading();
+            child = _buildLoading();
           }
+          return GestureDetector(
+            onTapUp: (details) => widget.onTapUp(context,details,null),
+            onScaleUpdate: (details) {
+              widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+            },
+            onScaleStart: (details) {
+              widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+            },
+            onScaleEnd: (details) {
+              widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+            },
+            child: child,
+          );
         }
     );
   }
 
   Widget _buildSync(BuildContext context, BoxConstraints constraints) {
+    Widget child;
     if (_loading == null) {
-      return _buildLoading();
+      child = _buildLoading();
+    } else {
+      child = _buildWrapperImage(context, constraints);
     }
-    return _buildWrapperImage(context, constraints);
+    return GestureDetector(
+      onTapUp: (details) => widget.onTapUp(context,details,null),
+      onScaleUpdate: (details) {
+        widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleStart: (details) {
+        widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      onScaleEnd: (details) {
+        widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
+      },
+      child: child,
+    );
   }
 
   Widget _buildWrapperImage(BuildContext context, BoxConstraints constraints) {
@@ -677,23 +706,10 @@ class _PhotoViewState extends State<PhotoView> {
       return widget.loadingChild;
     }
 
-    return GestureDetector(
-      onTapUp: (details) => widget.onTapUp(context,details,null),
-      onScaleUpdate: (details) {
-        widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-      },
-      onScaleStart: (details) {
-        widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-      },
-      onScaleEnd: (details) {
-        widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-      },
-      child: PhotoViewDefaultLoading(
-        event: _imageChunkEvent,
-        holderWiget: widget.holderWiget,
-      ),
+    return PhotoViewDefaultLoading(
+      event: _imageChunkEvent,
+      holderWiget: widget.holderWiget,
     );
-
   }
 
   Widget _buildLoadFailed() {
