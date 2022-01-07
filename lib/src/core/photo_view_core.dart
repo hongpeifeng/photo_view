@@ -119,6 +119,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   ScaleBoundaries cachedScaleBoundaries;
 
+  DateTime _lastScaleEndTime;
+  bool _isLastMoveDown;
+  double _lasta;
+
   void handleScaleAnimation() {
     scale = _scaleAnimation.value;
   }
@@ -200,11 +204,35 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     // animate velocity only if there is no scale change and a significant magnitude
     print(magnitude);
     if (_scaleBefore / _scale == 1.0 && magnitude >= 400.0) {
-      final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-      animatePosition(
-        _position,
-        clampPosition(position: _position + direction * magnitude * 0.5  ),
-      );
+      // final Offset direction = details.velocity.pixelsPerSecond / magnitude;
+      // animatePosition(
+      //   _position,
+      //   clampPosition(position: _position + direction * magnitude * 0.5  ),
+      // );
+
+       final Offset direction = details.velocity.pixelsPerSecond / magnitude;
+        var a = 0.4;
+        //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
+        if (_lastScaleEndTime != null &&
+            DateTime.now().difference(_lastScaleEndTime).inMilliseconds < 2000 &&
+            _isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
+          final diff =
+              DateTime.now().difference(_lastScaleEndTime).inMilliseconds /
+                  1000.0;
+          //抛物线公式1  (0.5 --> 1)
+          //y = 0.059523809523809576X²  -0.3690476190476191 X + 0.5 https://www.osgeo.cn/app/sc284
+          a = (_lasta ?? 0.4) + 0.0595 * pow(diff, 2) - 0.369 * diff + 0.5;
+          a = min(1.4, a);
+          print("原地加速了: $_lasta --> $a");
+          _lasta = a;
+        } else {
+          _lasta = null;
+        }
+     animatePosition(_position,
+            clampPosition(position: _position + direction * magnitude * a),
+            isScaleEnd: true);
+        _lastScaleEndTime = DateTime.now();
+        _isLastMoveDown = _position.dy - toDirection.dy < 0;
     }
   }
 
@@ -222,7 +250,22 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       ..fling(velocity: 0.4);
   }
 
-  void animatePosition(Offset from, Offset to) {
+  void animatePosition(Offset from, Offset to, {bool isScaleEnd = false}) {
+    if ((to.dy - from.dy).abs() <= 0) return;
+
+    if(isScaleEnd){
+          final xx = cornersY();
+    final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
+
+      if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
+        print("滑动到底 或者 顶部");
+        _positionAnimationController.duration = const Duration(milliseconds: 500);
+      } else {
+        _positionAnimationController.duration =
+        const Duration(milliseconds: 2000);
+      }  
+    }
+    
     _positionAnimation = Tween<Offset>(begin: from, end: to)
         .animate(CurvedAnimation(parent: _positionAnimationController, curve: Curves.easeOutCirc));
     _positionAnimationController
