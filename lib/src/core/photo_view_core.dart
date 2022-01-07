@@ -1,7 +1,17 @@
+import 'dart:math';
+
 import 'package:flutter/widgets.dart';
 
 import 'package:photo_view/photo_view.dart'
-    show PhotoViewHeroAttributes, PhotoViewImageScaleEndCallback, PhotoViewImageScaleStartCallback, PhotoViewImageScaleUpdateCallback, PhotoViewImageTapDownCallback, PhotoViewImageTapUpCallback, PhotoViewScaleState, ScaleStateCycle;
+    show
+        PhotoViewHeroAttributes,
+        PhotoViewImageScaleEndCallback,
+        PhotoViewImageScaleStartCallback,
+        PhotoViewImageScaleUpdateCallback,
+        PhotoViewImageTapDownCallback,
+        PhotoViewImageTapUpCallback,
+        PhotoViewScaleState,
+        ScaleStateCycle;
 import 'package:photo_view/src/controller/photo_view_controller.dart';
 import 'package:photo_view/src/controller/photo_view_controller_delegate.dart';
 import 'package:photo_view/src/controller/photo_view_scalestate_controller.dart';
@@ -119,16 +129,19 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   ScaleBoundaries cachedScaleBoundaries;
 
-  DateTime _lastScaleEndTime;
-  bool _isLastMoveDown;
-  double _lasta;
-
   void handleScaleAnimation() {
     scale = _scaleAnimation.value;
   }
 
   void handlePositionAnimate() {
     controller.position = _positionAnimation.value;
+
+    //使用加速度
+    // double tmpTime = time * _positionAnimationController.value;
+    // final sss =
+    //     startVelocity * tmpTime - 0.5 * acceleration * tmpTime * tmpTime;
+    // print('距离： $sss');
+    // controller.position = Offset(0, sss);
   }
 
   void handleRotationAnimation() {
@@ -143,7 +156,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _positionAnimationController.stop();
     _rotationAnimationController.stop();
 
-    widget.onScaleStart?.call(context, details, _normalizedPosition, controller.value);
+    widget.onScaleStart
+        ?.call(context, details, _normalizedPosition, controller.value);
   }
 
   void onScaleUpdate(ScaleUpdateDetails details) {
@@ -151,7 +165,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     final Offset delta = details.focalPoint - _normalizedPosition;
 
     updateScaleStateFromNewScale(newScale);
-
 
 //    print('position:${clampPosition(position: delta * details.scale)} cornersY:${cornersY(scale: details.scale).max}');
     if (widget.canScale)
@@ -164,6 +177,17 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     widget.onScaleUpdate?.call(context, details, delta, controller.value);
   }
 
+  DateTime _lastScaleEndTime;
+  bool _isLastMoveDown;
+  double _lasta;
+
+  double friction = 9; //动摩擦因素
+  double distance = 0.0; //运动位移
+  double startVelocity = 0; //初速度
+  double time; //运动所需时间
+  double g = 9.8;
+  double get acceleration => friction * g;
+
   void onScaleEnd(ScaleEndDetails details) {
     final double _scale = scale;
     final Offset _position = controller.position;
@@ -173,7 +197,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     widget.onScaleEnd?.call(context, details, _position, controller.value);
 
     if (!widget.canScale) return;
-      //animate back to maxScale if gesture exceeded the maxScale specified
+    //animate back to maxScale if gesture exceeded the maxScale specified
     if (_scale > maxScale) {
       final double scaleComebackRatio = maxScale / _scale;
       animateScale(_scale, maxScale);
@@ -202,39 +226,113 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     final double magnitude = details.velocity.pixelsPerSecond.distance;
 
     // animate velocity only if there is no scale change and a significant magnitude
-    print(magnitude);
+    print('pixelsPerSecond: ${details.velocity.pixelsPerSecond}');
+    print("magnitude: $magnitude");
+    print("_position: $_position");
+    final Offset toDirection = details.velocity.pixelsPerSecond + _position;
+    print("direction: $toDirection");
+    print('is down : ${(_position.dy - toDirection.dy) < 0}');
     if (_scaleBefore / _scale == 1.0 && magnitude >= 400.0) {
-      // final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-      // animatePosition(
-      //   _position,
-      //   clampPosition(position: _position + direction * magnitude * 0.5  ),
-      // );
+      //方法一
+      // {
+      //   final Offset direction = details.velocity.pixelsPerSecond / magnitude;
+      //   var a = 0.5;
+      //   //第二次滑动的时候，动画还没有结束，并且滑动方向相同
+      //   if (lastScaleEndTime != null &&
+      //       DateTime.now().difference(lastScaleEndTime).inMilliseconds < 2000 &&
+      //       isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
+      //     print("to do 加速了");
+      //     final diff =
+      //         DateTime.now().difference(lastScaleEndTime).inMilliseconds /
+      //             1000.0;
+      //     //抛物线公式1  (0.5 --> 1)
+      //     //y = 0.11904761904761896 X² + -0.4880952380952383 X + 1
+      //     a = 0.119 * pow(diff, 2) - 0.4881 * diff + 1;
+      //   }
+      //   animatePosition(
+      //     _position,
+      //     clampPosition(position: _position + direction * magnitude * a),
+      //   );
+      //   lastScaleEndTime = DateTime.now();
+      //   isLastMoveDown = _position.dy - toDirection.dy < 0;
+      // }
 
-       final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-       final Offset toDirection = details.velocity.pixelsPerSecond + _position;
-
+      //方法二
+      {
+        final Offset direction = details.velocity.pixelsPerSecond / magnitude;
         var a = 0.4;
         //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
         if (_lastScaleEndTime != null &&
-            DateTime.now().difference(_lastScaleEndTime).inMilliseconds < 2000 &&
+            DateTime.now().difference(_lastScaleEndTime).inMilliseconds <
+                2000 &&
             _isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
           final diff =
               DateTime.now().difference(_lastScaleEndTime).inMilliseconds /
                   1000.0;
           //抛物线公式1  (0.5 --> 1)
           //y = 0.059523809523809576X²  -0.3690476190476191 X + 0.5 https://www.osgeo.cn/app/sc284
-          a = (_lasta ?? 0.4) + 0.0595 * pow(diff, 2) - 0.369 * diff + 0.5;
-          a = min(1.4, a);
+          //a = (_lasta ?? 0.4) + 0.0595 * pow(diff, 2) - 0.369 * diff + 0.5;
+
+          //y = 0.10000000000000003 X² -0.4 X + 0.4 https://www.osgeo.cn/app/sc284
+          a = (_lasta ?? 0.4) + 0.1 * pow(diff, 2) - 0.4 * diff + 0.4;
           print("原地加速了: $_lasta --> $a");
+          a = min(1.4, a);
           _lasta = a;
         } else {
           _lasta = null;
         }
-     animatePosition(_position,
+        animatePosition(_position,
             clampPosition(position: _position + direction * magnitude * a),
             isScaleEnd: true);
         _lastScaleEndTime = DateTime.now();
         _isLastMoveDown = _position.dy - toDirection.dy < 0;
+      }
+
+      {
+        //方法三
+        // startVelocity = details.velocity.pixelsPerSecond.distance;
+        // time = -startVelocity / -acceleration;
+        // print('滑动时间： $time');
+        // _positionAnimationController.duration =
+        //     Duration(milliseconds: time.toInt() * 1000);
+        //
+        // print("开始速度： $startVelocity");
+        // if (lastScaleEndTime != null &&
+        //     DateTime.now().difference(lastScaleEndTime).inMilliseconds < 2000 &&
+        //     isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
+        //   final diff =
+        //       DateTime.now().difference(lastScaleEndTime).inMilliseconds /
+        //           1000.0;
+        //   startVelocity = startVelocity + acceleration * diff;
+        //   print("之前没有结束，开始速度： $startVelocity");
+        // }
+        //
+        // lastScaleEndTime = DateTime.now();
+        // isLastMoveDown = _position.dy - toDirection.dy < 0;
+        // _positionAnimationController
+        //   ..value = 0.0
+        //   ..forward();
+      }
+      // } else {}
+
+      // final Tolerance tolerance = Tolerance(
+      //   velocity: 1.0 /
+      //       (0.050 *
+      //           WidgetsBinding.instance.window
+      //               .devicePixelRatio), // logical pixels per second
+      //   distance: 1.0 /
+      //       WidgetsBinding.instance.window.devicePixelRatio, // logical pixels
+      // );
+      //
+      // ClampingScrollSimulation clampingScrollSimulation =
+      //     ClampingScrollSimulation(
+      //   position:
+      //       clampPosition(position: _position + direction * magnitude * 0.5).dy,
+      //   velocity: details.velocity.pixelsPerSecond.dy,
+      //   tolerance: tolerance,
+      // );
+      //
+      // _positionAnimationController.animateWith(clampingScrollSimulation);
     }
   }
 
@@ -253,27 +351,32 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void animatePosition(Offset from, Offset to, {bool isScaleEnd = false}) {
+    print(
+        "开始animatePosition: $from -----> $to ,滑动距离： ${to.dy - from.dy}  ${widget.scaleBoundaries.childSize.height}");
+    print(
+        "${widget.scaleBoundaries.childSize} -- ${widget.scaleBoundaries.initialScale} -- ");
     if ((to.dy - from.dy).abs() <= 0) return;
 
-    if(isScaleEnd){
-          final xx = cornersY();
-    final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
-
+    if (isScaleEnd) {
+      final xx = cornersY();
+      final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
       if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
         print("滑动到底 或者 顶部");
-        _positionAnimationController.duration = const Duration(milliseconds: 500);
+        _positionAnimationController.duration =
+            const Duration(milliseconds: 400);
       } else {
         _positionAnimationController.duration =
-        const Duration(milliseconds: 2000);
-      }  
+            const Duration(milliseconds: 2000);
+      }
     }
-    
-    _positionAnimation = Tween<Offset>(begin: from, end: to)
-        .animate(CurvedAnimation(parent: _positionAnimationController, curve: Curves.easeOutCirc));
+
+    _positionAnimation = Tween<Offset>(begin: from, end: to).animate(
+        CurvedAnimation(
+            parent: _positionAnimationController,
+            curve: Curves.easeOutCirc)); //Curves.easeOutCirc
     _positionAnimationController
       ..value = 0.0
-      ..forward()
-    ;
+      ..forward();
   }
 
   void animateRotation(double from, double to) {
@@ -305,7 +408,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       ..addListener(handleScaleAnimation);
     _scaleAnimationController.addStatusListener(onAnimationStatus);
 
-    _positionAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000))
+    _positionAnimationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2000))
       ..addListener(handlePositionAnimate);
 
     _rotationAnimationController = AnimationController(vsync: this)
@@ -314,8 +418,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     addAnimateOnScaleStateUpdate(animateOnScaleStateUpdate);
 
     cachedScaleBoundaries = widget.scaleBoundaries;
-
-
 
     setState(() {});
   }
@@ -356,9 +458,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
         stream: controller.outputStateStream,
         initialData: controller.prevValue,
         builder: (
-            BuildContext context,
-            AsyncSnapshot<PhotoViewControllerValue> snapshot,
-            ) {
+          BuildContext context,
+          AsyncSnapshot<PhotoViewControllerValue> snapshot,
+        ) {
           if (snapshot.hasData) {
             final PhotoViewControllerValue value = snapshot.data;
             final useImageScale = widget.filterQuality != FilterQuality.none;
@@ -412,13 +514,13 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   Widget _buildHero() {
     return heroAttributes != null
         ? Hero(
-      tag: heroAttributes.tag,
-      createRectTween: heroAttributes.createRectTween,
-      flightShuttleBuilder: heroAttributes.flightShuttleBuilder,
-      placeholderBuilder: heroAttributes.placeholderBuilder,
-      transitionOnUserGestures: heroAttributes.transitionOnUserGestures,
-      child: _buildChild(),
-    )
+            tag: heroAttributes.tag,
+            createRectTween: heroAttributes.createRectTween,
+            flightShuttleBuilder: heroAttributes.flightShuttleBuilder,
+            placeholderBuilder: heroAttributes.placeholderBuilder,
+            transitionOnUserGestures: heroAttributes.transitionOnUserGestures,
+            child: _buildChild(),
+          )
         : _buildChild();
   }
 
@@ -426,21 +528,21 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     return widget.hasCustomChild
         ? widget.customChild
         : Image(
-      image: widget.imageProvider,
-      gaplessPlayback: widget.gaplessPlayback ?? false,
-      filterQuality: widget.filterQuality,
-      width: scaleBoundaries.childSize.width * scale,
-      fit: BoxFit.contain,
-    );
+            image: widget.imageProvider,
+            gaplessPlayback: widget.gaplessPlayback ?? false,
+            filterQuality: widget.filterQuality,
+            width: scaleBoundaries.childSize.width * scale,
+            fit: BoxFit.contain,
+          );
   }
 }
 
 class _CenterWithOriginalSizeDelegate extends SingleChildLayoutDelegate {
   const _CenterWithOriginalSizeDelegate(
-      this.subjectSize,
-      this.basePosition,
-      this.useImageScale,
-      );
+    this.subjectSize,
+    this.basePosition,
+    this.useImageScale,
+  );
 
   final Size subjectSize;
   final Alignment basePosition;
@@ -474,11 +576,11 @@ class _CenterWithOriginalSizeDelegate extends SingleChildLayoutDelegate {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is _CenterWithOriginalSizeDelegate &&
-              runtimeType == other.runtimeType &&
-              subjectSize == other.subjectSize &&
-              basePosition == other.basePosition &&
-              useImageScale == other.useImageScale;
+      other is _CenterWithOriginalSizeDelegate &&
+          runtimeType == other.runtimeType &&
+          subjectSize == other.subjectSize &&
+          basePosition == other.basePosition &&
+          useImageScale == other.useImageScale;
 
   @override
   int get hashCode =>
