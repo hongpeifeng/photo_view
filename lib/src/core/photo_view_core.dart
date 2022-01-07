@@ -409,7 +409,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _scaleAnimationController.addStatusListener(onAnimationStatus);
 
     _positionAnimationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2000))
+        vsync: this, duration: const Duration(milliseconds: 2600))
       ..addListener(handlePositionAnimate);
 
     _rotationAnimationController = AnimationController(vsync: this)
@@ -472,8 +472,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
             if (widget.enableRotation) {
               matrix..rotateZ(value.rotation);
             }
-//            print('position: ${value.position.dy} ,'
-//                'child: ${ (scaleBoundaries.childSize.height * computedScale - scaleBoundaries.outerSize.height ) / 2}');
+            // print('position: ${value.position.dy} ,'
+            //     'child: ${(scaleBoundaries.childSize.height * computedScale - scaleBoundaries.outerSize.height) / 2}');
 
             final Widget customChildLayout = CustomSingleChildLayout(
               delegate: _CenterWithOriginalSizeDelegate(
