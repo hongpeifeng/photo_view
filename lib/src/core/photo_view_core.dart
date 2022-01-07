@@ -211,6 +211,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       // );
 
        final Offset direction = details.velocity.pixelsPerSecond / magnitude;
+       final Offset toDirection = details.velocity.pixelsPerSecond + _position;
+
         var a = 0.4;
         //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
         if (_lastScaleEndTime != null &&
