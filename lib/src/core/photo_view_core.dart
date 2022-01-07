@@ -129,6 +129,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   ScaleBoundaries cachedScaleBoundaries;
 
+  DateTime _lastScaleEndTime; //记录上次滑动结束时间
+  bool _isLastMoveDown; //记录上次滑动方向
+  double _lasta; //记录上次滑动 系数
+
   void handleScaleAnimation() {
     scale = _scaleAnimation.value;
   }
@@ -177,16 +181,12 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     widget.onScaleUpdate?.call(context, details, delta, controller.value);
   }
 
-  DateTime _lastScaleEndTime;
-  bool _isLastMoveDown;
-  double _lasta;
-
-  double friction = 9; //动摩擦因素
-  double distance = 0.0; //运动位移
-  double startVelocity = 0; //初速度
-  double time; //运动所需时间
-  double g = 9.8;
-  double get acceleration => friction * g;
+  // double friction = 9; //动摩擦因素
+  // double distance = 0.0; //运动位移
+  // double startVelocity = 0; //初速度
+  // double time; //运动所需时间
+  // double g = 9.8;
+  // double get acceleration => friction * g;
 
   void onScaleEnd(ScaleEndDetails details) {
     final double _scale = scale;
@@ -226,12 +226,11 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     final double magnitude = details.velocity.pixelsPerSecond.distance;
 
     // animate velocity only if there is no scale change and a significant magnitude
-    print('pixelsPerSecond: ${details.velocity.pixelsPerSecond}');
-    print("magnitude: $magnitude");
-    print("_position: $_position");
-    final Offset toDirection = details.velocity.pixelsPerSecond + _position;
-    print("direction: $toDirection");
-    print('is down : ${(_position.dy - toDirection.dy) < 0}');
+    // print('pixelsPerSecond: ${details.velocity.pixelsPerSecond}');
+    // print("magnitude: $magnitude");
+    // print("_position: $_position");
+    // print("direction: $toDirection");
+    // print('is down : ${(_position.dy - toDirection.dy) < 0}');
     if (_scaleBefore / _scale == 1.0 && magnitude >= 400.0) {
       //方法一
       // {
@@ -259,6 +258,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
       //方法二
       {
+        final Offset toDirection = details.velocity.pixelsPerSecond + _position;
         final Offset direction = details.velocity.pixelsPerSecond / magnitude;
         var a = 0.4;
         //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
@@ -275,7 +275,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
           //y = 0.10000000000000003 X² -0.4 X + 0.4 https://www.osgeo.cn/app/sc284
           a = (_lasta ?? 0.4) + 0.1 * pow(diff, 2) - 0.4 * diff + 0.4;
-          print("原地加速了: $_lasta --> $a");
           a = min(1.4, a);
           _lasta = a;
         } else {
@@ -351,17 +350,12 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void animatePosition(Offset from, Offset to, {bool isScaleEnd = false}) {
-    print(
-        "开始animatePosition: $from -----> $to ,滑动距离： ${to.dy - from.dy}  ${widget.scaleBoundaries.childSize.height}");
-    print(
-        "${widget.scaleBoundaries.childSize} -- ${widget.scaleBoundaries.initialScale} -- ");
     if ((to.dy - from.dy).abs() <= 0) return;
 
     if (isScaleEnd) {
       final xx = cornersY();
       final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
       if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
-        print("滑动到底 或者 顶部");
         _positionAnimationController.duration =
             const Duration(milliseconds: 400);
       } else {
