@@ -406,7 +406,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       _positionXAnimationController.duration =
           const Duration(milliseconds: 500);
       _isShort = true;
-      print('滑动到顶或者底部');
+      // print('滑动到顶或者底部');
     } else {
       _positionYAnimationController.duration =
           const Duration(milliseconds: 2600);
