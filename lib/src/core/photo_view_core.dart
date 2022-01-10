@@ -388,7 +388,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   final _shortSpring = SpringDescription.withDampingRatio(
     mass: 0.5,
     stiffness: 100,
-    ratio: 1.1,
+    ratio: 1.8,
   );
 
   void animatePositionXY(Offset from, Offset to, Velocity velocity) {
@@ -402,9 +402,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
     if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
       _positionYAnimationController.duration =
-          const Duration(milliseconds: 400);
+          const Duration(milliseconds: 500);
       _positionXAnimationController.duration =
-          const Duration(milliseconds: 400);
+          const Duration(milliseconds: 500);
       _isShort = true;
       print('滑动到顶或者底部');
     } else {
