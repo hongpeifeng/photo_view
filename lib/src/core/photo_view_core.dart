@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/physics.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:photo_view/photo_view.dart'
@@ -47,6 +48,7 @@ class PhotoViewCore extends StatefulWidget {
     @required this.tightMode,
     @required this.filterQuality,
     this.canScale = true,
+    this.isVerticalLongPhoto = false,
   })  : customChild = null,
         super(key: key);
 
@@ -70,6 +72,7 @@ class PhotoViewCore extends StatefulWidget {
     @required this.tightMode,
     @required this.filterQuality,
     this.canScale = true,
+    this.isVerticalLongPhoto = false,
   })  : imageProvider = null,
         gaplessPlayback = false,
         super(key: key);
@@ -98,6 +101,7 @@ class PhotoViewCore extends StatefulWidget {
 
   final FilterQuality filterQuality;
   final bool canScale;
+  final bool isVerticalLongPhoto;
 
   @override
   State<StatefulWidget> createState() {
@@ -122,6 +126,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   AnimationController _positionAnimationController;
   Animation<Offset> _positionAnimation;
 
+  AnimationController _positionXAnimationController;
+  AnimationController _positionYAnimationController;
+
   AnimationController _rotationAnimationController;
   Animation<double> _rotationAnimation;
 
@@ -136,6 +143,13 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   void handleScaleAnimation() {
     scale = _scaleAnimation.value;
+  }
+
+  void handlePositionXYAnimate() {
+    // print(
+    //     'sssss: ${_positionXAnimationController.value} - ${_positionYAnimationController.value}');
+    controller.position = Offset(_positionXAnimationController.value,
+        _positionYAnimationController.value);
   }
 
   void handlePositionAnimate() {
@@ -158,7 +172,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _scaleBefore = scale;
     _normalizedPosition = details.focalPoint - controller.position;
     _scaleAnimationController.stop();
-    _positionAnimationController.stop();
+    _positionAnimationController?.stop();
+    _positionXAnimationController?.stop();
+    _positionYAnimationController?.stop();
+
     _rotationAnimationController.stop();
 
     widget.onScaleStart
@@ -181,13 +198,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       );
     widget.onScaleUpdate?.call(context, details, delta, controller.value);
   }
-
-  // double friction = 9; //动摩擦因素
-  // double distance = 0.0; //运动位移
-  // double startVelocity = 0; //初速度
-  // double time; //运动所需时间
-  // double g = 9.8;
-  // double get acceleration => friction * g;
 
   void onScaleEnd(ScaleEndDetails details) {
     final double _scale = scale;
@@ -233,31 +243,16 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     // print("direction: $toDirection");
     // print('is down : ${(_position.dy - toDirection.dy) < 0}');
     if (_scaleBefore / _scale == 1.0 && magnitude >= 400.0) {
-      //方法一
-      // {
-      //   final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-      //   var a = 0.5;
-      //   //第二次滑动的时候，动画还没有结束，并且滑动方向相同
-      //   if (lastScaleEndTime != null &&
-      //       DateTime.now().difference(lastScaleEndTime).inMilliseconds < 2000 &&
-      //       isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
-      //     print("to do 加速了");
-      //     final diff =
-      //         DateTime.now().difference(lastScaleEndTime).inMilliseconds /
-      //             1000.0;
-      //     //抛物线公式1  (0.5 --> 1)
-      //     //y = 0.11904761904761896 X² + -0.4880952380952383 X + 1
-      //     a = 0.119 * pow(diff, 2) - 0.4881 * diff + 1;
-      //   }
-      //   animatePosition(
-      //     _position,
-      //     clampPosition(position: _position + direction * magnitude * a),
-      //   );
-      //   lastScaleEndTime = DateTime.now();
-      //   isLastMoveDown = _position.dy - toDirection.dy < 0;
-      // }
+      //非长图
+      if (!widget.isVerticalLongPhoto) {
+        animatePosition(
+            _position,
+            clampPosition(
+                position: _position + details.velocity.pixelsPerSecond * 0.5));
+        return;
+      }
 
-      //方法二
+      //长图滑动
       {
         final Offset toDirection = details.velocity.pixelsPerSecond + _position;
         final Offset direction = details.velocity.pixelsPerSecond / magnitude;
@@ -270,25 +265,19 @@ class PhotoViewCoreState extends State<PhotoViewCore>
           final diff =
               DateTime.now().difference(_lastScaleEndTime).inMilliseconds /
                   1000.0;
-          //抛物线公式1  (0.5 --> 1)
-          //y = 0.059523809523809576X²  -0.3690476190476191 X + 0.5 https://www.osgeo.cn/app/sc284
-          //a = (_lasta ?? 0.4) + 0.0595 * pow(diff, 2) - 0.369 * diff + 0.5;
-
-          //y = 0.10000000000000003 X² -0.4 X + 0.4 https://www.osgeo.cn/app/sc284
-
           // \ 0.188\cdot\left(\frac{1}{x^{2}\ +\ 0.5}\ -0.138\right)
-
           a = (_lasta ?? _defA) + ((1 / (pow(diff, 2) + 0.5)) - 0.138) * 0.188;
           a = min(0.99, a);
           _lasta = a;
         } else {
           _lasta = null;
         }
-        animatePosition(
+        animatePositionXY(
             _position,
             clampPosition(
                 position: _position + details.velocity.pixelsPerSecond * a),
-            isScaleEnd: true);
+            details.velocity);
+
         _lastScaleEndTime = DateTime.now();
         _isLastMoveDown = _position.dy - toDirection.dy < 0;
       }
@@ -355,24 +344,24 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       ..fling(velocity: 0.4);
   }
 
-  void animatePosition(Offset from, Offset to, {bool isScaleEnd = false}) {
+  void animatePosition(Offset from, Offset to) {
     if ((to.dy - from.dy).abs() <= 0) return;
 
-    if (isScaleEnd) {
-      // print('滑动距离： ${to.dy - from.dy}');
-      final xx = cornersY();
-      // final dis = (to.dy - from.dy).abs();
-      final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
-      if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
-        _positionAnimationController.duration =
-            const Duration(milliseconds: 650);
-        // print('滑动到顶或者底部');
-      } else {
-        _positionAnimationController.duration =
-            const Duration(milliseconds: 2600);
-      }
-    }
-
+    // if (isScaleEnd) {
+    //   // print('滑动距离： ${to.dy - from.dy}');
+    //   final xx = cornersY();
+    //   // final dis = (to.dy - from.dy).abs();
+    //   final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
+    //   if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
+    //     _positionAnimationController.duration =
+    //         const Duration(milliseconds: 500);
+    //     print('滑动到顶或者底部');
+    //   } else {
+    //     _positionAnimationController.duration =
+    //         const Duration(milliseconds: 2600);
+    //   }
+    // }
+    //
     _positionAnimation = Tween<Offset>(begin: from, end: to).animate(
         CurvedAnimation(
             parent: _positionAnimationController,
@@ -380,6 +369,69 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _positionAnimationController
       ..value = 0.0
       ..forward();
+  }
+
+  final _kDefTolerance = Tolerance(
+    velocity: 1.0 /
+        (0.050 *
+            WidgetsBinding
+                .instance.window.devicePixelRatio), // logical pixels per second
+    distance: 1.0 / WidgetsBinding.instance.window.devicePixelRatio,
+  );
+
+  final _spring = SpringDescription.withDampingRatio(
+    mass: 0.5,
+    stiffness: 100.0,
+    ratio: 3.5,
+  );
+
+  final _shortSpring = SpringDescription.withDampingRatio(
+    mass: 0.5,
+    stiffness: 100,
+    ratio: 1.1,
+  );
+
+  void animatePositionXY(Offset from, Offset to, Velocity velocity) {
+    if ((to.dy - from.dy).abs() <= 0) return;
+
+    // print('滑动距离： from: $from -> $to');
+    final xx = cornersY();
+    // final dis = (to.dy - from.dy).abs();
+
+    bool _isShort = false;
+    final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
+    if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
+      _positionYAnimationController.duration =
+          const Duration(milliseconds: 400);
+      _positionXAnimationController.duration =
+          const Duration(milliseconds: 400);
+      _isShort = true;
+      print('滑动到顶或者底部');
+    } else {
+      _positionYAnimationController.duration =
+          const Duration(milliseconds: 2600);
+      _positionXAnimationController.duration =
+          const Duration(milliseconds: 2600);
+    }
+
+    final scrollSpringSimulationY = ScrollSpringSimulation(
+        _isShort ? _shortSpring : _spring,
+        from.dy,
+        to.dy,
+        velocity.pixelsPerSecond.dy,
+        tolerance: _kDefTolerance);
+    final scrollSpringSimulationX = ScrollSpringSimulation(
+        _isShort ? _shortSpring : _spring,
+        from.dx,
+        to.dx,
+        velocity.pixelsPerSecond.dx,
+        tolerance: _kDefTolerance);
+    _positionYAnimationController
+      ..value = 0.0
+      ..animateWith(scrollSpringSimulationY);
+    _positionXAnimationController
+      ..value = 0.0
+      ..animateWith(scrollSpringSimulationX);
   }
 
   void animateRotation(double from, double to) {
@@ -411,9 +463,28 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       ..addListener(handleScaleAnimation);
     _scaleAnimationController.addStatusListener(onAnimationStatus);
 
+    // if (widget.isVerticalLongPhoto) {
+    _positionXAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+      value: 0,
+      lowerBound: double.negativeInfinity,
+      upperBound: double.infinity,
+    )..addListener(handlePositionXYAnimate);
+
+    _positionYAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+      value: 0,
+      lowerBound: double.negativeInfinity,
+      upperBound: double.infinity,
+    )..addListener(handlePositionXYAnimate);
+    // } else {
     _positionAnimationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2600))
-      ..addListener(handlePositionAnimate);
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..addListener(handlePositionAnimate);
+    // }
 
     _rotationAnimationController = AnimationController(vsync: this)
       ..addListener(handleRotationAnimation);
@@ -435,7 +506,12 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   void dispose() {
     _scaleAnimationController.removeStatusListener(onAnimationStatus);
     _scaleAnimationController.dispose();
-    _positionAnimationController.dispose();
+    _positionAnimationController?.dispose();
+
+    _positionYAnimationController?.removeListener(handlePositionXYAnimate);
+    _positionXAnimationController?.removeListener(handlePositionXYAnimate);
+    _positionXAnimationController?.dispose();
+    _positionYAnimationController?.dispose();
     _rotationAnimationController.dispose();
     super.dispose();
   }
@@ -446,7 +522,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   void onTapDown(TapDownDetails details) {
 //    widget.onTapDown?.call(context, details, controller.value);
-    _positionAnimationController.stop();
+    _positionAnimationController?.stop();
+    _positionXAnimationController?.stop();
+    _positionYAnimationController?.stop();
   }
 
   @override
