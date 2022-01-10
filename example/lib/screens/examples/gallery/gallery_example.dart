@@ -84,10 +84,10 @@ class _GalleryExampleState extends State<GalleryExample> {
     final galleryItems = [
       "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/5b928cc334d34b3e52966bb1777c9bb7.jpg",
       //"https://fanbook-1251001060.cos.accelerate.myqcloud.com/fanbook/app/files/chatroom/image/449ab743d0fb3265f472b8d961e950b1.jpg",
-      "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/2199b30f81980b97199dd4f8f9b405bd.jpg",
+      "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/d1fd06496806e5fbbf5c755178274a38.jpg",
       "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/c4443491f46934117cee774353107e16.jpg",
-      "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/91307c62fc8e698d79f7aca4a78856bf.jpg",
-      "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/cde48a1d7b2b7c32421ee3fbe51d4ed4.jpg"
+      "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/cde48a1d7b2b7c32421ee3fbe51d4ed4.jpg",
+      "https://fb-cdn.fanbook.mobi/fanbook/app/files/chatroom/image/2199b30f81980b97199dd4f8f9b405bd.jpg",
     ];
 
     Navigator.push(context, CustomPageRouteBuilder(

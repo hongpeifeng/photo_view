@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:photo_view/photo_view.dart'
@@ -47,6 +50,7 @@ class PhotoViewCore extends StatefulWidget {
     @required this.tightMode,
     @required this.filterQuality,
     this.canScale = true,
+    this.isVerticalLongPhoto = false,
   })  : customChild = null,
         super(key: key);
 
@@ -70,6 +74,7 @@ class PhotoViewCore extends StatefulWidget {
     @required this.tightMode,
     @required this.filterQuality,
     this.canScale = true,
+    this.isVerticalLongPhoto = false,
   })  : imageProvider = null,
         gaplessPlayback = false,
         super(key: key);
@@ -98,6 +103,7 @@ class PhotoViewCore extends StatefulWidget {
 
   final FilterQuality filterQuality;
   final bool canScale;
+  final bool isVerticalLongPhoto;
 
   @override
   State<StatefulWidget> createState() {
@@ -122,6 +128,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   AnimationController _positionAnimationController;
   Animation<Offset> _positionAnimation;
 
+  AnimationController _positionXAnimationController;
+  AnimationController _positionYAnimationController;
+
   AnimationController _rotationAnimationController;
   Animation<double> _rotationAnimation;
 
@@ -133,20 +142,44 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   bool _isLastMoveDown; //记录上次滑动方向
   double _lasta; //记录上次滑动 系数
   final _defA = 0.35;
+  final _kDefTolerance = Tolerance(
+    velocity: 1.0 /
+        (0.050 *
+            WidgetsBinding
+                .instance.window.devicePixelRatio), // logical pixels per second
+    distance: 1.0 / WidgetsBinding.instance.window.devicePixelRatio,
+  );
+
+  //log
+  //mass = 0.5 stf=100 ratio=3.5 快了
+  //mass = 1.0 stf=100 ratio=3.5 慢了，并且安卓有卡顿
+  //mass = 0.8 stf=100 ratio=3.5 还是感觉慢了
+  //mass = 0.55 stf=100 ratio=3.5 钟总感觉不如
+  // mass=0.5好 轻快
+  final _spring = SpringDescription.withDampingRatio(
+    mass: 0.5,
+    stiffness: 100.0,
+    ratio: 3.5,
+  );
+  final _shortSpring = SpringDescription.withDampingRatio(
+    mass: 0.5,
+    stiffness: 100,
+    ratio: 1.8,
+  );
 
   void handleScaleAnimation() {
     scale = _scaleAnimation.value;
   }
 
+  void handlePositionXYAnimate() {
+    // print(
+    //     'sssss: ${_positionXAnimationController.value} - ${_positionYAnimationController.value}');
+    controller.position = Offset(_positionXAnimationController.value,
+        _positionYAnimationController.value);
+  }
+
   void handlePositionAnimate() {
     controller.position = _positionAnimation.value;
-
-    //使用加速度
-    // double tmpTime = time * _positionAnimationController.value;
-    // final sss =
-    //     startVelocity * tmpTime - 0.5 * acceleration * tmpTime * tmpTime;
-    // print('距离： $sss');
-    // controller.position = Offset(0, sss);
   }
 
   void handleRotationAnimation() {
@@ -158,7 +191,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _scaleBefore = scale;
     _normalizedPosition = details.focalPoint - controller.position;
     _scaleAnimationController.stop();
-    _positionAnimationController.stop();
+    _positionAnimationController?.stop();
+    _positionXAnimationController?.stop();
+    _positionYAnimationController?.stop();
+
     _rotationAnimationController.stop();
 
     widget.onScaleStart
@@ -181,13 +217,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       );
     widget.onScaleUpdate?.call(context, details, delta, controller.value);
   }
-
-  // double friction = 9; //动摩擦因素
-  // double distance = 0.0; //运动位移
-  // double startVelocity = 0; //初速度
-  // double time; //运动所需时间
-  // double g = 9.8;
-  // double get acceleration => friction * g;
 
   void onScaleEnd(ScaleEndDetails details) {
     final double _scale = scale;
@@ -225,119 +254,44 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     }
     // get magnitude from gesture velocity
     final double magnitude = details.velocity.pixelsPerSecond.distance;
-
     // animate velocity only if there is no scale change and a significant magnitude
-    // print('pixelsPerSecond: ${details.velocity.pixelsPerSecond}');
-    // print("magnitude: $magnitude");
-    // print("_position: $_position");
-    // print("direction: $toDirection");
-    // print('is down : ${(_position.dy - toDirection.dy) < 0}');
     if (_scaleBefore / _scale == 1.0 && magnitude >= 400.0) {
-      //方法一
-      // {
-      //   final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-      //   var a = 0.5;
-      //   //第二次滑动的时候，动画还没有结束，并且滑动方向相同
-      //   if (lastScaleEndTime != null &&
-      //       DateTime.now().difference(lastScaleEndTime).inMilliseconds < 2000 &&
-      //       isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
-      //     print("to do 加速了");
-      //     final diff =
-      //         DateTime.now().difference(lastScaleEndTime).inMilliseconds /
-      //             1000.0;
-      //     //抛物线公式1  (0.5 --> 1)
-      //     //y = 0.11904761904761896 X² + -0.4880952380952383 X + 1
-      //     a = 0.119 * pow(diff, 2) - 0.4881 * diff + 1;
-      //   }
-      //   animatePosition(
-      //     _position,
-      //     clampPosition(position: _position + direction * magnitude * a),
-      //   );
-      //   lastScaleEndTime = DateTime.now();
-      //   isLastMoveDown = _position.dy - toDirection.dy < 0;
-      // }
-
-      //方法二
-      {
-        final Offset toDirection = details.velocity.pixelsPerSecond + _position;
-        final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-        var a = _defA;
-        //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
-        if (_lastScaleEndTime != null &&
-            DateTime.now().difference(_lastScaleEndTime).inMilliseconds <
-                2600 &&
-            _isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
-          final diff =
-              DateTime.now().difference(_lastScaleEndTime).inMilliseconds /
-                  1000.0;
-          //抛物线公式1  (0.5 --> 1)
-          //y = 0.059523809523809576X²  -0.3690476190476191 X + 0.5 https://www.osgeo.cn/app/sc284
-          //a = (_lasta ?? 0.4) + 0.0595 * pow(diff, 2) - 0.369 * diff + 0.5;
-
-          //y = 0.10000000000000003 X² -0.4 X + 0.4 https://www.osgeo.cn/app/sc284
-
-          // \ 0.188\cdot\left(\frac{1}{x^{2}\ +\ 0.5}\ -0.138\right)
-
-          a = (_lasta ?? _defA) + ((1 / (pow(diff, 2) + 0.5)) - 0.138) * 0.188;
-          a = min(0.99, a);
-          _lasta = a;
-        } else {
-          _lasta = null;
-        }
+      //非长图
+      if (!widget.isVerticalLongPhoto) {
         animatePosition(
             _position,
             clampPosition(
-                position: _position + details.velocity.pixelsPerSecond * a),
-            isScaleEnd: true);
-        _lastScaleEndTime = DateTime.now();
-        _isLastMoveDown = _position.dy - toDirection.dy < 0;
+                position: _position + details.velocity.pixelsPerSecond * 0.5));
+        return;
       }
 
-      {
-        //方法三
-        // startVelocity = details.velocity.pixelsPerSecond.distance;
-        // time = -startVelocity / -acceleration;
-        // print('滑动时间： $time');
-        // _positionAnimationController.duration =
-        //     Duration(milliseconds: time.toInt() * 1000);
-        //
-        // print("开始速度： $startVelocity");
-        // if (lastScaleEndTime != null &&
-        //     DateTime.now().difference(lastScaleEndTime).inMilliseconds < 2000 &&
-        //     isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
-        //   final diff =
-        //       DateTime.now().difference(lastScaleEndTime).inMilliseconds /
-        //           1000.0;
-        //   startVelocity = startVelocity + acceleration * diff;
-        //   print("之前没有结束，开始速度： $startVelocity");
-        // }
-        //
-        // lastScaleEndTime = DateTime.now();
-        // isLastMoveDown = _position.dy - toDirection.dy < 0;
-        // _positionAnimationController
-        //   ..value = 0.0
-        //   ..forward();
-      }
-      // } else {}
+      //长图滑动
+      final Offset toDirection = details.velocity.pixelsPerSecond + _position;
+      // final Offset direction = details.velocity.pixelsPerSecond / magnitude;
+      // var a = _defA;
+      //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
+      // if (_lastScaleEndTime != null &&
+      //     DateTime.now().difference(_lastScaleEndTime).inMilliseconds < 2600 &&
+      //     _isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
+      //   final diff =
+      //       DateTime.now().difference(_lastScaleEndTime).inMilliseconds /
+      //           1000.0;
+      //   // \ 0.188\cdot\left(\frac{1}{x^{2}\ +\ 0.5}\ -0.138\right)
+      //   a = (_lasta ?? _defA) + ((1 / (pow(diff, 2) + 0.5)) - 0.138) * 0.188;
+      //   print('加速度： $a');
+      //   a = min(0.99, a);
+      //   _lasta = a;
+      // } else {
+      //   _lasta = null;
+      // }
+      animatePositionXY(
+          _position,
+          clampPosition(
+              position: _position + details.velocity.pixelsPerSecond * _defA),
+          details.velocity);
 
-      // final Tolerance tolerance = Tolerance(
-      //   velocity: 1.0 /
-      //       (0.050 *
-      //           WidgetsBinding.instance.window
-      //               .devicePixelRatio), // logical pixels per second
-      //   distance: 1.0 /
-      //       WidgetsBinding.instance.window.devicePixelRatio, // logical pixels
-      // );
-      //
-      // ClampingScrollSimulation clampingScrollSimulation =
-      //     ClampingScrollSimulation(
-      //   position:
-      //       clampPosition(position: _position + direction * magnitude * 0.5).dy,
-      //   velocity: details.velocity.pixelsPerSecond.dy,
-      //   tolerance: tolerance,
-      // );
-      //
-      // _positionAnimationController.animateWith(clampingScrollSimulation);
+      _lastScaleEndTime = DateTime.now();
+      _isLastMoveDown = _position.dy - toDirection.dy < 0;
     }
   }
 
@@ -355,23 +309,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       ..fling(velocity: 0.4);
   }
 
-  void animatePosition(Offset from, Offset to, {bool isScaleEnd = false}) {
+  void animatePosition(Offset from, Offset to) {
     if ((to.dy - from.dy).abs() <= 0) return;
-
-    if (isScaleEnd) {
-      // print('滑动距离： ${to.dy - from.dy}');
-      final xx = cornersY();
-      // final dis = (to.dy - from.dy).abs();
-      final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
-      if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
-        _positionAnimationController.duration =
-            const Duration(milliseconds: 650);
-        // print('滑动到顶或者底部');
-      } else {
-        _positionAnimationController.duration =
-            const Duration(milliseconds: 2600);
-      }
-    }
 
     _positionAnimation = Tween<Offset>(begin: from, end: to).animate(
         CurvedAnimation(
@@ -380,6 +319,47 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _positionAnimationController
       ..value = 0.0
       ..forward();
+  }
+
+  void animatePositionXY(Offset from, Offset to, Velocity velocity) {
+    if ((to.dy - from.dy).abs() <= 0) return;
+
+    // print('滑动距离： from: $from -> $to');
+    final imgY = cornersY();
+    bool _isShort = false;
+    final imgHeight =
+        imgY.max.abs() > imgY.min.abs() ? imgY.max.abs() : imgY.min.abs();
+    if ((imgHeight - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
+      _positionYAnimationController.duration =
+          const Duration(milliseconds: 500);
+      _positionXAnimationController.duration =
+          const Duration(milliseconds: 500);
+      _isShort = true;
+    } else {
+      _positionYAnimationController.duration =
+          const Duration(milliseconds: 2600);
+      _positionXAnimationController.duration =
+          const Duration(milliseconds: 2600);
+    }
+
+    final scrollSpringSimulationY = ScrollSpringSimulation(
+        _isShort ? _shortSpring : _spring,
+        from.dy,
+        to.dy,
+        velocity.pixelsPerSecond.dy * 0.95,
+        tolerance: _kDefTolerance);
+    final scrollSpringSimulationX = ScrollSpringSimulation(
+        _isShort ? _shortSpring : _spring,
+        from.dx,
+        to.dx,
+        velocity.pixelsPerSecond.dx * 0.95,
+        tolerance: _kDefTolerance);
+    _positionYAnimationController
+      ..value = 0.0
+      ..animateWith(scrollSpringSimulationY);
+    _positionXAnimationController
+      ..value = 0.0
+      ..animateWith(scrollSpringSimulationX);
   }
 
   void animateRotation(double from, double to) {
@@ -412,8 +392,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     _scaleAnimationController.addStatusListener(onAnimationStatus);
 
     _positionAnimationController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2600))
-      ..addListener(handlePositionAnimate);
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..addListener(handlePositionAnimate);
 
     _rotationAnimationController = AnimationController(vsync: this)
       ..addListener(handleRotationAnimation);
@@ -422,6 +403,27 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
     cachedScaleBoundaries = widget.scaleBoundaries;
 
+    if (widget.isVerticalLongPhoto) {
+      _positionXAnimationController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 2600),
+        value: 0,
+        lowerBound: double.negativeInfinity,
+        upperBound: double.infinity,
+      )..addListener(handlePositionXYAnimate);
+
+      _positionYAnimationController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 2600),
+        value: 0,
+        lowerBound: double.negativeInfinity,
+        upperBound: double.infinity,
+      )..addListener(handlePositionXYAnimate);
+
+      // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      //   controller.position = const Offset(0, 999999);
+      // });
+    }
     setState(() {});
   }
 
@@ -435,7 +437,12 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   void dispose() {
     _scaleAnimationController.removeStatusListener(onAnimationStatus);
     _scaleAnimationController.dispose();
-    _positionAnimationController.dispose();
+    _positionAnimationController?.dispose();
+
+    _positionYAnimationController?.removeListener(handlePositionXYAnimate);
+    _positionXAnimationController?.removeListener(handlePositionXYAnimate);
+    _positionXAnimationController?.dispose();
+    _positionYAnimationController?.dispose();
     _rotationAnimationController.dispose();
     super.dispose();
   }
@@ -446,7 +453,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   void onTapDown(TapDownDetails details) {
 //    widget.onTapDown?.call(context, details, controller.value);
-    _positionAnimationController.stop();
+    _positionAnimationController?.stop();
+    _positionXAnimationController?.stop();
+    _positionYAnimationController?.stop();
   }
 
   @override
@@ -475,8 +484,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
             if (widget.enableRotation) {
               matrix..rotateZ(value.rotation);
             }
-            // print('position: ${value.position.dy} ,'
-            //     'child: ${(scaleBoundaries.childSize.height * computedScale - scaleBoundaries.outerSize.height) / 2}');
+            // print(
+            //     "matrix dx:${value.position.dx}-dy:${value.position.dy}--scale:${computedScale}--FocusPoint:${value.rotationFocusPoint}");
+            // final xx = getScaleForScaleState(
+            //     PhotoViewScaleState.initial, widget.scaleBoundaries);
 
             final Widget customChildLayout = CustomSingleChildLayout(
               delegate: _CenterWithOriginalSizeDelegate(
@@ -493,6 +504,11 @@ class PhotoViewCoreState extends State<PhotoViewCore>
                     : null,
                 child: Center(
                   child: Transform(
+                    // origin: Offset(
+                    //     0,
+                    //     computedScale - xx <= 0
+                    //         ? 0
+                    //         : (value.rotationFocusPoint?.dy ?? 0)),
                     child: customChildLayout,
                     transform: matrix,
                     alignment: basePosition,

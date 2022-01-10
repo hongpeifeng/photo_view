@@ -71,9 +71,9 @@ mixin PhotoViewControllerDelegate on State<PhotoViewCore> {
       return;
     }
     final PhotoViewScaleState newScaleState =
-    (scale > scaleBoundaries.initialScale)
-        ? PhotoViewScaleState.zoomedIn
-        : PhotoViewScaleState.zoomedOut;
+        (scale > scaleBoundaries.initialScale)
+            ? PhotoViewScaleState.zoomedIn
+            : PhotoViewScaleState.zoomedOut;
 
     scaleStateController.setInvisibly(newScaleState);
   }
@@ -82,8 +82,8 @@ mixin PhotoViewControllerDelegate on State<PhotoViewCore> {
 
   double get scale {
     final needsRecalc = markNeedsScaleRecalc &&
-        !(scaleStateController.scaleState == PhotoViewScaleState.zoomedIn
-            || scaleStateController.scaleState == PhotoViewScaleState.zoomedOut);
+        !(scaleStateController.scaleState == PhotoViewScaleState.zoomedIn ||
+            scaleStateController.scaleState == PhotoViewScaleState.zoomedOut);
     final scaleExistsOnController = controller.scale != null;
     if (needsRecalc || !scaleExistsOnController) {
       final newScale = getScaleForScaleState(
