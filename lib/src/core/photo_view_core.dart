@@ -132,6 +132,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   DateTime _lastScaleEndTime; //记录上次滑动结束时间
   bool _isLastMoveDown; //记录上次滑动方向
   double _lasta; //记录上次滑动 系数
+  final _defA = 0.35;
 
   void handleScaleAnimation() {
     scale = _scaleAnimation.value;
@@ -260,11 +261,11 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       {
         final Offset toDirection = details.velocity.pixelsPerSecond + _position;
         final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-        var a = 0.4;
+        var a = _defA;
         //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
         if (_lastScaleEndTime != null &&
             DateTime.now().difference(_lastScaleEndTime).inMilliseconds <
-                2000 &&
+                2600 &&
             _isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
           final diff =
               DateTime.now().difference(_lastScaleEndTime).inMilliseconds /
@@ -274,14 +275,19 @@ class PhotoViewCoreState extends State<PhotoViewCore>
           //a = (_lasta ?? 0.4) + 0.0595 * pow(diff, 2) - 0.369 * diff + 0.5;
 
           //y = 0.10000000000000003 X² -0.4 X + 0.4 https://www.osgeo.cn/app/sc284
-          a = (_lasta ?? 0.4) + 0.1 * pow(diff, 2) - 0.4 * diff + 0.4;
-          a = min(1.4, a);
+
+          // \ 0.188\cdot\left(\frac{1}{x^{2}\ +\ 0.5}\ -0.138\right)
+
+          a = (_lasta ?? _defA) + ((1 / (pow(diff, 2) + 0.5)) - 0.138) * 0.188;
+          a = min(0.99, a);
           _lasta = a;
         } else {
           _lasta = null;
         }
-        animatePosition(_position,
-            clampPosition(position: _position + direction * magnitude * a),
+        animatePosition(
+            _position,
+            clampPosition(
+                position: _position + details.velocity.pixelsPerSecond * a),
             isScaleEnd: true);
         _lastScaleEndTime = DateTime.now();
         _isLastMoveDown = _position.dy - toDirection.dy < 0;
@@ -353,14 +359,17 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     if ((to.dy - from.dy).abs() <= 0) return;
 
     if (isScaleEnd) {
+      // print('滑动距离： ${to.dy - from.dy}');
       final xx = cornersY();
+      // final dis = (to.dy - from.dy).abs();
       final heig = xx.max.abs() > xx.min.abs() ? xx.max.abs() : xx.min.abs();
       if ((heig - to.dy.abs()).abs() < 100 || to.dy.abs() < 100.0) {
         _positionAnimationController.duration =
-            const Duration(milliseconds: 400);
+            const Duration(milliseconds: 650);
+        // print('滑动到顶或者底部');
       } else {
         _positionAnimationController.duration =
-            const Duration(milliseconds: 2000);
+            const Duration(milliseconds: 2600);
       }
     }
 
