@@ -266,7 +266,7 @@ class PhotoViewCoreState extends State<PhotoViewCore>
       }
 
       //长图滑动
-      final Offset toDirection = details.velocity.pixelsPerSecond + _position;
+      // final Offset toDirection = details.velocity.pixelsPerSecond + _position;
       // final Offset direction = details.velocity.pixelsPerSecond / magnitude;
       // var a = _defA;
       //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
@@ -290,8 +290,8 @@ class PhotoViewCoreState extends State<PhotoViewCore>
               position: _position + details.velocity.pixelsPerSecond * _defA),
           details.velocity);
 
-      _lastScaleEndTime = DateTime.now();
-      _isLastMoveDown = _position.dy - toDirection.dy < 0;
+      // _lastScaleEndTime = DateTime.now();
+      // _isLastMoveDown = _position.dy - toDirection.dy < 0;
     }
   }
 
