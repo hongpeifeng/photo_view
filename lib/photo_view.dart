@@ -607,47 +607,110 @@ class _PhotoViewState extends State<PhotoView> {
     return FutureBuilder(
         future: _getImage(),
         builder: (BuildContext context, AsyncSnapshot<ImageInfo> info) {
-          Widget child;
+          Widget? child;
           if (info.hasData) {
             child = _buildWrapperImage(context, constraints);
           } else {
             child = _buildLoading();
           }
           return GestureDetector(
-            onTapUp: (details) => widget.onTapUp(context,details,null),
-            onScaleUpdate: (details) {
-              widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-            },
-            onScaleStart: (details) {
-              widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-            },
-            onScaleEnd: (details) {
-              widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-            },
+            onTapUp: widget.onTapUp != null
+                ? (details) => widget.onTapUp!(context, details, null)
+                : null,
+            onScaleUpdate: widget.onScaleUpdate != null
+                ? (details) {
+                    widget.onScaleUpdate!(
+                        context,
+                        details,
+                        null,
+                        const PhotoViewControllerValue(
+                            position: Offset.zero,
+                            scale: null,
+                            rotation: null,
+                            rotationFocusPoint: null));
+                  }
+                : null,
+            onScaleStart: widget.onScaleStart != null
+                ? (details) {
+                    widget.onScaleStart!(
+                        context,
+                        details,
+                        null,
+                        const PhotoViewControllerValue(
+                            position: Offset.zero,
+                            rotation: null,
+                            scale: null,
+                            rotationFocusPoint: null));
+                  }
+                : null,
+            onScaleEnd: widget.onScaleEnd != null
+                ? (details) {
+                    widget.onScaleEnd!(
+                        context,
+                        details,
+                        null,
+                        const PhotoViewControllerValue(
+                            position: Offset.zero,
+                            rotation: null,
+                            scale: null,
+                            rotationFocusPoint: null));
+                  }
+                : null,
             child: child,
           );
-        }
-    );
+        });
   }
 
   Widget _buildSync(BuildContext context, BoxConstraints constraints) {
-    Widget child;
+    Widget? child;
     if (_loading == null) {
       child = _buildLoading();
     } else {
       child = _buildWrapperImage(context, constraints);
     }
     return GestureDetector(
-      onTapUp: (details) => widget.onTapUp(context,details,null),
-      onScaleUpdate: (details) {
-        widget.onScaleUpdate(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-      },
-      onScaleStart: (details) {
-        widget.onScaleStart(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-      },
-      onScaleEnd: (details) {
-        widget.onScaleEnd(context,details,null, PhotoViewControllerValue(position: Offset.zero));
-      },
+      onTapUp: widget.onTapUp != null
+          ? (details) => widget.onTapUp!(context, details, null)
+          : null,
+      onScaleUpdate: widget.onScaleUpdate != null
+          ? (details) {
+              widget.onScaleUpdate!(
+                  context,
+                  details,
+                  null,
+                  const PhotoViewControllerValue(
+                      position: Offset.zero,
+                      rotation: null,
+                      rotationFocusPoint: null,
+                      scale: null));
+            }
+          : null,
+      onScaleStart: widget.onScaleStart != null
+          ? (details) {
+              widget.onScaleStart!(
+                  context,
+                  details,
+                  null,
+                  const PhotoViewControllerValue(
+                      position: Offset.zero,
+                      rotation: null,
+                      scale: null,
+                      rotationFocusPoint: null));
+            }
+          : null,
+      onScaleEnd: widget.onScaleEnd != null
+          ? (details) {
+              widget.onScaleEnd!(
+                  context,
+                  details,
+                  null,
+                  const PhotoViewControllerValue(
+                      position: Offset.zero,
+                      rotationFocusPoint: null,
+                      scale: null,
+                      rotation: null));
+            }
+          : null,
       child: child,
     );
   }
@@ -715,39 +778,45 @@ class _PhotoViewState extends State<PhotoView> {
   Widget _buildLoadFailed() {
     return GestureDetector(
       onTapUp: (details) => widget.onTapUp!(context, details, null),
-      onScaleUpdate: (details) {
-        widget.onScaleUpdate!(
-            context,
-            details,
-            null,
-            const PhotoViewControllerValue(
-                position: Offset.zero,
-                rotation: null,
-                scale: null,
-                rotationFocusPoint: null));
-      },
-      onScaleStart: (details) {
-        widget.onScaleStart!(
-            context,
-            details,
-            null,
-            const PhotoViewControllerValue(
-                position: Offset.zero,
-                rotation: null,
-                scale: null,
-                rotationFocusPoint: null));
-      },
-      onScaleEnd: (details) {
-        widget.onScaleEnd!(
-            context,
-            details,
-            null,
-            const PhotoViewControllerValue(
-                position: Offset.zero,
-                rotation: null,
-                scale: null,
-                rotationFocusPoint: null));
-      },
+      onScaleUpdate: widget.onScaleUpdate != null
+          ? (details) {
+              widget.onScaleUpdate!(
+                  context,
+                  details,
+                  null,
+                  const PhotoViewControllerValue(
+                      position: Offset.zero,
+                      rotation: null,
+                      scale: null,
+                      rotationFocusPoint: null));
+            }
+          : null,
+      onScaleStart: widget.onScaleStart != null
+          ? (details) {
+              widget.onScaleStart!(
+                  context,
+                  details,
+                  null,
+                  const PhotoViewControllerValue(
+                      position: Offset.zero,
+                      rotation: null,
+                      scale: null,
+                      rotationFocusPoint: null));
+            }
+          : null,
+      onScaleEnd: widget.onScaleEnd != null
+          ? (details) {
+              widget.onScaleEnd!(
+                  context,
+                  details,
+                  null,
+                  const PhotoViewControllerValue(
+                      position: Offset.zero,
+                      rotation: null,
+                      scale: null,
+                      rotationFocusPoint: null));
+            }
+          : null,
       child: widget.loadFailedChild ??
           PhotoViewDefaultError(
               holderWiget: widget.holderWiget, onFailReload: resetLoadFailed),
