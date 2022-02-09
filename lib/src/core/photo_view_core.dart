@@ -310,8 +310,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void animatePosition(Offset from, Offset to) {
-    if ((to.dy - from.dy).abs() <= 0) return;
-
     _positionAnimation = Tween<Offset>(begin: from, end: to).animate(
         CurvedAnimation(
             parent: _positionAnimationController,
