@@ -414,7 +414,7 @@ class PhotoViewGalleryPageOptions {
 
   PhotoViewGalleryPageOptions.customChild(
       {required this.child,
-      required this.imageProvider,
+      this.imageProvider,
       this.backgroundDecoration,
       this.childSize,
       this.heroAttributes,
@@ -438,7 +438,7 @@ class PhotoViewGalleryPageOptions {
       : assert(child != null);
 
   /// Mirror to [PhotoView.imageProvider]
-  final ImageProvider imageProvider;
+  final ImageProvider? imageProvider;
 
   final BoxDecoration? backgroundDecoration;
 
