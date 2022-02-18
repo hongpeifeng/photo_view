@@ -1,6 +1,9 @@
 name: photo_view_example
 description: Example of how to use Photo View
 
+environment:
+  sdk: '>=2.10.0 <3.0.0'
+
 dependencies:
 #  flutter_svg:
   photo_view:

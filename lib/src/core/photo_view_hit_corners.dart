@@ -7,23 +7,23 @@ mixin HitCornersDetector on PhotoViewControllerDelegate {
   HitAxis hitAxis() => HitAxis(hitCornersX(), hitCornersY());
 
   HitCorners hitCornersX() {
-    final double childWidth = scaleBoundaries.childSize.width * scale;
+    final double childWidth = scaleBoundaries.childSize!.width * scale!;
     final double screenWidth = scaleBoundaries.outerSize.width;
     if (screenWidth.floor() >= childWidth.floor()) {
       return const HitCorners(true, true);
     }
-    double x = -position.dx;
+    double x = -position!.dx;
     final cornersX = this.cornersX();
     return HitCorners(x <= cornersX.min, x >= cornersX.max);
   }
 
   HitCorners hitCornersY() {
-    final double childHeight = scaleBoundaries.childSize.height * scale;
+    final double childHeight = scaleBoundaries.childSize!.height * scale!;
     final double screenHeight = scaleBoundaries.outerSize.height;
     if (screenHeight.floor() >= childHeight.floor()) {
       return const HitCorners(true, true);
     }
-    final y = -position.dy;
+    final y = -position!.dy;
     final cornersY = this.cornersY();
     return HitCorners(y <= cornersY.min, y >= cornersY.max);
   }
