@@ -433,10 +433,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   bool get _positionAnimating =>
-      (_positionXAnimationController?.isAnimating ||
-          _positionYAnimationController?.isAnimating ||
-          _positionAnimationController?.isAnimating) ??
-      false;
+      (_positionXAnimationController?.isAnimating ?? false) ||
+      (_positionYAnimationController?.isAnimating ?? false) ||
+      (_positionAnimationController?.isAnimating ?? false);
 
   bool _stopPositionXYAnimation() {
     _positionXAnimationController?.stop();
