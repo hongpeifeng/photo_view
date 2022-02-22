@@ -138,6 +138,9 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
   ScaleBoundaries cachedScaleBoundaries;
 
+  //onTapDown事件中如果已经停止过动画，那么onTapUp事件就不对外抛出。
+  bool _stoppedAnimation = false;
+
   DateTime _lastScaleEndTime; //记录上次滑动结束时间
   bool _isLastMoveDown; //记录上次滑动方向
   double _lasta; //记录上次滑动 系数
@@ -150,12 +153,10 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     distance: 1.0 / WidgetsBinding.instance.window.devicePixelRatio,
   );
 
-  //log
   //mass = 0.5 stf=100 ratio=3.5 快了
   //mass = 1.0 stf=100 ratio=3.5 慢了，并且安卓有卡顿
   //mass = 0.8 stf=100 ratio=3.5 还是感觉慢了
-  //mass = 0.55 stf=100 ratio=3.5 钟总感觉不如
-  // mass=0.5好 轻快
+  //mass = 0.55 stf=100 ratio=3.5 感觉不如 mass=0.5好 轻快
   final _spring = SpringDescription.withDampingRatio(
     mass: 0.5,
     stiffness: 100.0,
@@ -172,8 +173,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void handlePositionXYAnimate() {
-    // print(
-    //     'sssss: ${_positionXAnimationController.value} - ${_positionYAnimationController.value}');
     controller.position = Offset(_positionXAnimationController.value,
         _positionYAnimationController.value);
   }
@@ -207,7 +206,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
 
     updateScaleStateFromNewScale(newScale);
 
-//    print('position:${clampPosition(position: delta * details.scale)} cornersY:${cornersY(scale: details.scale).max}');
     if (widget.canScale)
       updateMultiple(
         scale: newScale,
@@ -254,7 +252,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
     }
     // get magnitude from gesture velocity
     final double magnitude = details.velocity.pixelsPerSecond.distance;
-    // animate velocity only if there is no scale change and a significant magnitude
     if (_scaleBefore / _scale == 1.0 && magnitude >= 400.0) {
       //非长图
       if (!widget.isVerticalLongPhoto) {
@@ -265,33 +262,11 @@ class PhotoViewCoreState extends State<PhotoViewCore>
         return;
       }
 
-      //长图滑动
-      // final Offset toDirection = details.velocity.pixelsPerSecond + _position;
-      // final Offset direction = details.velocity.pixelsPerSecond / magnitude;
-      // var a = _defA;
-      //第二次滑动的时候，动画还没有结束，并且滑动方向相同,在原加速度基础上累加
-      // if (_lastScaleEndTime != null &&
-      //     DateTime.now().difference(_lastScaleEndTime).inMilliseconds < 2600 &&
-      //     _isLastMoveDown == (_position.dy - toDirection.dy < 0)) {
-      //   final diff =
-      //       DateTime.now().difference(_lastScaleEndTime).inMilliseconds /
-      //           1000.0;
-      //   // \ 0.188\cdot\left(\frac{1}{x^{2}\ +\ 0.5}\ -0.138\right)
-      //   a = (_lasta ?? _defA) + ((1 / (pow(diff, 2) + 0.5)) - 0.138) * 0.188;
-      //   print('加速度： $a');
-      //   a = min(0.99, a);
-      //   _lasta = a;
-      // } else {
-      //   _lasta = null;
-      // }
       animatePositionXY(
           _position,
           clampPosition(
               position: _position + details.velocity.pixelsPerSecond * _defA),
           details.velocity);
-
-      // _lastScaleEndTime = DateTime.now();
-      // _isLastMoveDown = _position.dy - toDirection.dy < 0;
     }
   }
 
@@ -322,7 +297,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   void animatePositionXY(Offset from, Offset to, Velocity velocity) {
     if ((to.dy - from.dy).abs() <= 0) return;
 
-    // print('滑动距离： from: $from -> $to');
     final imgY = cornersY();
     bool _isShort = false;
     final imgHeight =
@@ -417,10 +391,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
         lowerBound: double.negativeInfinity,
         upperBound: double.infinity,
       )..addListener(handlePositionXYAnimate);
-
-      // WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      //   controller.position = const Offset(0, 999999);
-      // });
     }
     setState(() {});
   }
@@ -446,12 +416,28 @@ class PhotoViewCoreState extends State<PhotoViewCore>
   }
 
   void onTapUp(TapUpDetails details) {
-    widget.onTapUp?.call(context, details, controller.value);
+    if (!_stoppedAnimation)
+      widget.onTapUp?.call(context, details, controller.value);
+    _stoppedAnimation = false;
   }
 
   void onTapDown(TapDownDetails details) {
-//    widget.onTapDown?.call(context, details, controller.value);
-    _positionAnimationController?.stop();
+    if (_positionAnimating) {
+      _positionAnimationController?.stop();
+      _positionXAnimationController?.stop();
+      _positionYAnimationController?.stop();
+      _stoppedAnimation = true;
+    } else {
+      _stoppedAnimation = false;
+    }
+  }
+
+  bool get _positionAnimating =>
+      (_positionXAnimationController?.isAnimating ?? false) ||
+      (_positionYAnimationController?.isAnimating ?? false) ||
+      (_positionAnimationController?.isAnimating ?? false);
+
+  bool _stopPositionXYAnimation() {
     _positionXAnimationController?.stop();
     _positionYAnimationController?.stop();
   }
@@ -502,11 +488,6 @@ class PhotoViewCoreState extends State<PhotoViewCore>
                     : null,
                 child: Center(
                   child: Transform(
-                    // origin: Offset(
-                    //     0,
-                    //     computedScale - xx <= 0
-                    //         ? 0
-                    //         : (value.rotationFocusPoint?.dy ?? 0)),
                     child: customChildLayout,
                     transform: matrix,
                     alignment: basePosition,
